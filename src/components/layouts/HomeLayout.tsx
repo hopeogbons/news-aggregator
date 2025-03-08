@@ -1,43 +1,37 @@
 import { FC, ReactNode } from "react";
-import { Box } from "@mui/material";
-import styled from "styled-components";
+import { Box, Container, Typography } from "@mui/material";
 
 interface HomeLayoutProps {
   children: ReactNode;
 }
 
-const HeaderBoxWrapper = styled(Box)({
-  backgroundColor: "purple",
-});
-const HeaderBox = styled(Box)({
-  backgroundColor: "green",
-});
-const ContentBoxWrapper = styled(Box)({
-  backgroundColor: "red",
-});
-const ContentBox = styled(Box)({
-  backgroundColor: "blue",
-});
-const FooterBoxWrapper = styled(Box)({
-  backgroundColor: "yellow",
-});
-const FooterBox = styled(Box)({
-  backgroundColor: "blue",
-});
-
 const HomeLayout: FC<HomeLayoutProps> = ({ children }) => (
   <>
-    <HeaderBoxWrapper>
-      <HeaderBox>Header</HeaderBox>
-    </HeaderBoxWrapper>
+    <Container maxWidth="xl">
+      <Box
+        sx={{
+          height: "10vh",
+          alignContent: "center",
+        }}
+      >
+        <Typography variant="h4">News Aggregator</Typography>
+      </Box>
+    </Container>
 
-    <ContentBoxWrapper>
-      <ContentBox>{children}</ContentBox>
-    </ContentBoxWrapper>
+    <Container maxWidth="xl">
+      <Box>{children}</Box>
+    </Container>
 
-    <FooterBoxWrapper>
-      <FooterBox>Footer</FooterBox>
-    </FooterBoxWrapper>
+    <Container maxWidth="xl">
+      <Box
+        sx={{
+          height: "5vh",
+          alignContent: "center",
+        }}
+      >
+        <Typography variant="body2">&copy; News Aggregator 2025</Typography>
+      </Box>
+    </Container>
   </>
 );
 
