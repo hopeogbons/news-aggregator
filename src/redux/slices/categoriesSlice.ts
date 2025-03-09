@@ -1,29 +1,38 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchNewsAPICategories } from "../../services/NewsAPI/categories";
-import { fetchTheGuardianCategories } from "../../services/TheGuardian/categories";
-import { fetchNewYorkTimesCategories } from "../../services/NewYorkTimes/categories";
+import {
+  createSlice,
+  createAsyncThunk,
+  PayloadAction,
+  AsyncThunk,
+  SliceSelectors,
+  Slice,
+} from "@reduxjs/toolkit";
+import { fetchNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/categories";
+import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/categories";
+import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/categories";
 
-interface CategoryState {
+interface CategoriesState {
   categories: string[];
   loading: boolean;
   error: string | null;
 }
 
-const initialState: CategoryState = {
+const initialState: CategoriesState = {
   categories: [],
   loading: false,
   error: null,
 };
 
-export const fetchCategories = createAsyncThunk<string[], void>(
-  "categories/fetch",
-  async () => {
-    const [newsApiCategories, theGuardianCategories, newYorkTimesCategories] =
-      await Promise.all([
-        fetchNewsAPICategories(),
-        fetchTheGuardianCategories(),
-        fetchNewYorkTimesCategories(),
-      ]);
+export const fetchCategories: AsyncThunk<string[], void, any> =
+  createAsyncThunk<string[], void>("categories/fetch", async () => {
+    const [newsApiCategories, theGuardianCategories, newYorkTimesCategories]: [
+      string[],
+      string[],
+      string[]
+    ] = await Promise.all([
+      fetchNewsApiCategories(),
+      fetchTheGuardianCategories(),
+      fetchNewYorkTimesCategories(),
+    ]);
 
     const allCategories: string[] = [
       ...newsApiCategories,
@@ -37,10 +46,15 @@ export const fetchCategories = createAsyncThunk<string[], void>(
     );
 
     return sortedCategories;
-  }
-);
+  });
 
-const categoriesSlice = createSlice({
+const categoriesSlice: Slice<
+  CategoriesState,
+  {},
+  "categories",
+  "categories",
+  SliceSelectors<CategoriesState>
+> = createSlice({
   name: "categories",
   initialState,
   reducers: {},
@@ -57,9 +71,9 @@ const categoriesSlice = createSlice({
           state.categories = action.payload;
         }
       )
-      .addCase(fetchCategories.rejected, (state, action) => {
+      .addCase(fetchCategories.rejected, (state) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch categories";
+        state.error = "Failed to fetch categories";
       });
   },
 });
