@@ -22,6 +22,7 @@ export interface NewYorkTimesArticle {
   headline: {
     main: string;
   };
+  keywords: [{ name: string; value: string }];
   abstract: string;
   web_url: string;
   pub_date: string;
