@@ -6,9 +6,9 @@ import {
   Slice,
   SliceSelectors,
 } from "@reduxjs/toolkit";
-import { fetchNewsApiKeywords } from "../../thirdPartyAPI/news/NewsAPI/keywords";
-import { fetchTheGuardianKeywords } from "../../thirdPartyAPI/news/TheGuardian/keywords";
-import { fetchNewYorkTimesKeywords } from "../../thirdPartyAPI/news/NewYorkTimes/keywords";
+import { fetchNewsApiKeywords } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianKeywords } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesKeywords } from "../../thirdPartyAPI/news/NewYorkTimes/api";
 import { randomizeItems } from "../../utils";
 
 interface KeywordsState {
@@ -43,7 +43,7 @@ export const fetchKeywords: AsyncThunk<string[], void, any> = createAsyncThunk<
     ...newYorkTimesKeywords,
   ];
 
-  const limitTo = 20;
+  const limitTo = 30;
   const uniqueKeywords: string[] = Array.from(new Set(allKeywords));
   const sortedKeywords: string[] = randomizeItems(uniqueKeywords, limitTo);
 

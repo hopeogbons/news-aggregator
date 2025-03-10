@@ -6,9 +6,9 @@ import {
   SliceSelectors,
   Slice,
 } from "@reduxjs/toolkit";
-import { fetchNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/categories";
-import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/categories";
-import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/categories";
+import { fetchNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/api";
 
 interface CategoriesState {
   categories: string[];

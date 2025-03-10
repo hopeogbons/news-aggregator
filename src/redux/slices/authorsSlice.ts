@@ -6,9 +6,9 @@ import {
   Slice,
   SliceSelectors,
 } from "@reduxjs/toolkit";
-import { fetchNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/authors";
-import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/authors";
-import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/authors";
+import { fetchNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/api";
 
 interface AuthorsState {
   authors: string[];
