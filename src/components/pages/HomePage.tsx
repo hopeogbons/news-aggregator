@@ -13,6 +13,7 @@ import FieldsetWithLegend from "../form/FieldsetWithLegend";
 import MultipleSelectChip from "../form/MultipleSelectChip";
 import { fetchCategories } from "../../redux/slices/categoriesSlice";
 import { fetchAuthors } from "../../redux/slices/authorsSlice";
+import { fetchKeywords } from "../../redux/slices/keywordsSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import styled from "styled-components";
 
@@ -32,10 +33,15 @@ const HomePage = () => {
     loading: authorsLoading,
     error: authorsError,
   } = useAppSelector((state) => state.authors);
+  const {
+    keywords,
+    loading: keywordsLoading,
+  } = useAppSelector((state) => state.keywords);
 
   useLayoutEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchAuthors());
+    dispatch(fetchKeywords());
   }, [dispatch]);
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -59,7 +65,7 @@ const HomePage = () => {
         sx={{
           display: "flex",
           flexDirection: { xs: "column-reverse", md: "row" },
-          height: { xs: "inherit", md: "85vh" },
+          height: { xs: "inherit" }, // md: "85vh"
           justifyContent: "space-between",
           gap: { xs: "1.2em", md: "0.8em" },
         }}
@@ -104,66 +110,16 @@ const HomePage = () => {
                   p: "0.8em 0.6em",
                 }}
               >
+                {[100, 40, 110, 60, 90, 90, 60, 80, 70, 110].map(
+                  (skeletonWidth) => (
                 <ChipSkeleton
                   variant="rounded"
                   animation="wave"
                   height={30}
-                  width={100}
+                      width={skeletonWidth}
                 />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={40}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={110}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={60}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={90}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={90}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={60}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={80}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={70}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={110}
-                />
+                  )
+                )}
               </Box>
             ) : (
               <MultipleSelectChip
@@ -184,66 +140,16 @@ const HomePage = () => {
                   p: "0.8em 0.6em",
                 }}
               >
+                {[90, 90, 100, 90, 130, 110, 130, 140, 90, 110].map(
+                  (skeletonWidth) => (
                 <ChipSkeleton
                   variant="rounded"
                   animation="wave"
                   height={30}
-                  width={90}
+                      width={skeletonWidth}
                 />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={90}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={100}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={90}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={130}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={110}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={130}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={140}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={90}
-                />
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                  width={110}
-                />
+                  )
+                )}
               </Box>
             ) : (
               <MultipleSelectChip
@@ -261,7 +167,7 @@ const HomePage = () => {
           }}
         >
           <FieldsetWithLegend title="News Feed:">
-            Donal Trump
+            Donald Trump
           </FieldsetWithLegend>
         </Box>
         <Box
@@ -270,96 +176,25 @@ const HomePage = () => {
           }}
         >
           <FieldsetWithLegend title="Keywords:" sx={{ p: "20px" }}>
+            {keywordsLoading ? (
+              <></>
+            ) : (
             <Stack
               direction="row"
               spacing={1}
               flexWrap="wrap"
               sx={{ mt: "8px", justifyContent: "flex-start" }}
             >
+                {keywords.map((keyword) => (
               <Chip
-                label="Deepseek AI"
+                    label={keyword}
                 variant="outlined"
                 sx={{ mb: "8px !important" }}
                 onClick={() => {}}
               />
-              <Chip
-                label="Donald Trump"
-                variant="outlined"
-                onClick={() => {}}
-              />
-              <Chip
-                label="Chinese Warships"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Covid 19"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Bricks Nation"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Super Bowl 2025"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="GPT AI"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Deepseek AI"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Donald Trump"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Chinese Warships"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Covid 19"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Bricks Nation"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="Super Bowl 2025"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-              <Chip
-                label="AI"
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
+                ))}
             </Stack>
+            )}
           </FieldsetWithLegend>
         </Box>
       </Box>
