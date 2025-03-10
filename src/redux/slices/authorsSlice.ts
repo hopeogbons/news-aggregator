@@ -80,4 +80,5 @@ const authorsSlice: Slice<
   },
 });
 
+export type { AuthorsState };
 export default authorsSlice.reducer;

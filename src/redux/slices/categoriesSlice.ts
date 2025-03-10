@@ -78,4 +78,5 @@ const categoriesSlice: Slice<
   },
 });
 
+export type { CategoriesState };
 export default categoriesSlice.reducer;
