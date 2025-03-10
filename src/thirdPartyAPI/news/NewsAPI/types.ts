@@ -25,3 +25,20 @@ export interface NewsApiArticleResponse {
   totalResults: number;
   articles: NewsApiArticle[];
 }
+
+//////////////
+// Keywords //
+//////////////
+
+export interface NewsApiArticle {
+  author: string | null;
+  title: string;
+  description: string;
+  url: string;
+  publishedAt: string;
+}
+export interface NewsApiArticleResponse {
+  status: string;
+  totalResults: number;
+  articles: NewsApiArticle[];
+}
