@@ -4,3 +4,5 @@ export const AUTHORS_API_URL =
   "https://api.nytimes.com/svc/search/v2/articlesearch.json";
 export const CATEGORIES_API_URL =
   "https://api.nytimes.com/svc/search/v2/articlesearch.json";
+export const KEYWORDS_API_URL =
+  "https://api.nytimes.com/svc/search/v2/articlesearch.json";
