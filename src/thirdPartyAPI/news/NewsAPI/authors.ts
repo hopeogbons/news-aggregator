@@ -9,7 +9,7 @@ export const fetchNewsApiAuthors: () => Promise<string[]> = async (): Promise<
     const response: AxiosResponse<NewsApiArticleResponse, any> =
       await axios.get<NewsApiArticleResponse>(AUTHORS_API_URL, {
         params: {
-          q: "technology",
+          q: "world news",
           apiKey: API_KEY,
         },
       });
