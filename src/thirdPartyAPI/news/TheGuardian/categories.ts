@@ -25,7 +25,7 @@ export const fetchTheGuardianCategories: () => Promise<
 
     return categories;
   } catch (error) {
-    console.error("Failed to fetch New York Times categories:", error);
+    console.error("Failed to fetch The Guardian categories:", error);
     return [];
   }
 };

@@ -24,7 +24,7 @@ export const fetchTheGuardianAuthors: () => Promise<
 
     return authors;
   } catch (error) {
-    console.error("Failed to fetch New York Times authors:", error);
+    console.error("Failed to fetch The Guardian authors:", error);
     return [];
   }
 };
