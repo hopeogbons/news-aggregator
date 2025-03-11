@@ -1,87 +1,56 @@
-import axios, { AxiosResponse } from "axios";
 import {
   NewYorkTimesArticle,
   NewYorkTimesArticleResponse,
   NewYorkTimesSectionResponse,
 } from "./types";
-import {
-  API_KEY,
-  AUTHORS_API_URL,
-  CATEGORIES_API_URL,
-  KEYWORDS_API_URL,
-} from "./constants";
+import { API_KEY, ARTICLE_SEARCH_URL_V2 } from "./constants";
+import { requestApi } from "../../../utils";
 
-export const fetchNewYorkTimesAuthors: () => Promise<
-  string[]
-> = async (): Promise<string[]> => {
-  try {
-    const response: AxiosResponse<NewYorkTimesArticleResponse, any> =
-      await axios.get<NewYorkTimesArticleResponse>(AUTHORS_API_URL, {
-        params: {
-          "api-key": API_KEY,
-        },
-      });
+export const fetchNewYorkTimesArticles = async (
+  query?: string
+): Promise<NewYorkTimesArticle[]> => {
+  const params: Record<string, string> = {
+    sortBy: "relevancy",
+    "api-key": API_KEY,
+    apiKey: API_KEY,
+  };
+  if (query) params.q = query;
 
-    const authors: string[] = response.data.response.docs
-      .map((article: NewYorkTimesArticle) => article.byline?.original)
-      .filter(
-        (original: string | null): original is string => original !== null
-      )
-      .map((original: string) => original.replace(/^By\s+/i, ""));
-
-    return authors;
-  } catch (error) {
-    console.error("Failed to fetch New York Times authors:", error);
-    return [];
-  }
-};
-
-export const fetchNewYorkTimesCategories: () => Promise<
-  string[]
-> = async (): Promise<string[]> => {
-  try {
-    const response: AxiosResponse<NewYorkTimesSectionResponse, any> =
-      await axios.get<NewYorkTimesSectionResponse>(CATEGORIES_API_URL, {
-        params: {
-          "api-key": API_KEY,
-        },
-      });
-
-    const categories: string[] = response.data.response.docs.map(
-      (article: any) => article.section_name.toLowerCase()
+  const data: NewYorkTimesArticleResponse | null =
+    await requestApi<NewYorkTimesArticleResponse>(
+      ARTICLE_SEARCH_URL_V2,
+      "GET",
+      params,
+      "Failed to fetch New York Times articles"
     );
 
-    return categories;
-  } catch (error) {
-    console.error("Failed to fetch New York Times categories:", error);
-    return [];
-  }
+  return data?.response?.docs ?? [];
 };
 
-export const fetchNewYorkTimesKeywords: () => Promise<
-  string[]
-> = async (): Promise<string[]> => {
-  try {
-    const response: AxiosResponse<NewYorkTimesArticleResponse, any> =
-      await axios.get<NewYorkTimesArticleResponse>(KEYWORDS_API_URL, {
-        params: {
-          q: "world news",
-          "api-key": API_KEY,
-        },
-      });
+/*
+ # Articles extraction, future use
 
-    const keywords: string[] = response.data.response.docs
-      .flatMap(
-        (article: NewYorkTimesArticle) =>
-          article.keywords?.map(
-            (keyword: { name: string; value: string }) => keyword.value
-          ) || []
-      )
-      .filter((keyword): keyword is string => keyword !== undefined);
+  const filteredArticles: NewYorkTimesArticle[] = data.response.docs.filter(
+    (article: NewYorkTimesArticle) => {
+      const matchesCategory: boolean = categories.some(
+        (category: string) =>
+          article.headline.main.includes(category) ||
+          article.abstract.includes(category)
+      );
+      const matchesAuthor: boolean = authors.some((author: string) =>
+        article.byline?.original?.includes(author)
+      );
+      return matchesCategory && matchesAuthor;
+    }
+  );
 
-    return keywords;
-  } catch (error) {
-    console.error("Failed to fetch New York Times keywords:", error);
-    return [];
-  }
-};
+  const articles: NewYorkTimesArticle[] = filteredArticles.map(
+    (article: NewYorkTimesArticle) => ({
+      ...article,
+      source: "New York Times",
+      publishedAt: article.pub_date,
+    })
+  );
+
+  return articles;
+*/

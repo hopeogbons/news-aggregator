@@ -8,7 +8,10 @@ import {
 } from "@reduxjs/toolkit";
 import { fetchNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/api";
 import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { extractTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/services";
+import { extractNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/services";
+import { extractNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/services";
 
 interface CategoriesState {
   categories: string[];
@@ -29,9 +32,9 @@ export const fetchCategories: AsyncThunk<string[], void, any> =
       string[],
       string[]
     ] = await Promise.all([
-      fetchNewsApiCategories(),
-      fetchTheGuardianCategories(),
-      fetchNewYorkTimesCategories(),
+      fetchNewsApiCategories().then(extractNewsApiCategories),
+      fetchTheGuardianCategories().then(extractTheGuardianCategories),
+      fetchNewYorkTimesArticles().then(extractNewYorkTimesCategories),
     ]);
 
     const allCategories: string[] = [

@@ -1,7 +1,3 @@
-////////////////
-// Categories //
-////////////////
-
 export interface TheGuardianSection {
   id: string;
 }
@@ -11,17 +7,14 @@ export interface TheGuardianSectionResponse {
   };
 }
 
-/////////////
-// Authors //
-/////////////
-
 export interface TheGuardianArticle {
   tags: {
     webTitle: string | null;
+    type: string;
   }[];
   webTitle: string;
-  fields: {
-    trailText: string;
+  fields?: {
+    byline?: string;
   };
   webUrl: string;
   webPublicationDate: string;

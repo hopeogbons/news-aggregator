@@ -1,8 +1,7 @@
 export const API_KEY = import.meta.env.VITE_THEGUARDIAN_KEY;
 
-export const AUTHORS_API_URL = "https://content.guardianapis.com/search";
-export const CATEGORIES_API_URL = "https://content.guardianapis.com/sections";
-export const KEYWORDS_API_URL = "https://content.guardianapis.com/search";
+export const SEARCH_URL = "https://content.guardianapis.com/search";
+export const SECTIONS_URL = "https://content.guardianapis.com/sections";
 
 /**
  * To ensure relevance, we are manually curating news-related categories,

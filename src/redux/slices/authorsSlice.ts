@@ -6,9 +6,13 @@ import {
   Slice,
   SliceSelectors,
 } from "@reduxjs/toolkit";
-import { fetchNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/api";
-import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { fetchNewsApiArticles } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianArticles } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { extractNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/services";
+import { extractTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/services";
+import { withDefaultQueryString } from "../../utils";
+import { extractNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/services"
 
 interface AuthorsState {
   authors: string[];
@@ -31,9 +35,9 @@ export const fetchAuthors: AsyncThunk<string[], void, any> = createAsyncThunk<
     string[],
     string[]
   ] = await Promise.all([
-    fetchNewsApiAuthors(),
-    fetchTheGuardianAuthors(),
-    fetchNewYorkTimesAuthors(),
+    fetchNewsApiArticles(withDefaultQueryString()).then(extractNewsApiAuthors),
+    fetchTheGuardianArticles().then(extractTheGuardianAuthors),
+    fetchNewYorkTimesArticles().then(extractNewYorkTimesAuthors),
   ]);
 
   const allAuthors: string[] = [

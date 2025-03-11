@@ -6,10 +6,13 @@ import {
   Slice,
   SliceSelectors,
 } from "@reduxjs/toolkit";
-import { fetchNewsApiKeywords } from "../../thirdPartyAPI/news/NewsAPI/api";
-import { fetchTheGuardianKeywords } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesKeywords } from "../../thirdPartyAPI/news/NewYorkTimes/api";
-import { randomizeItems } from "../../utils";
+import { fetchNewsApiArticles } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianArticles } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { fetchRandomSubset, withDefaultQueryString } from "../../utils";
+import { extractTheGuardianKeywords } from "../../thirdPartyAPI/news/TheGuardian/services";
+import { extractNewsApiKeywords } from "../../thirdPartyAPI/news/NewsAPI/services";
+import { extractNewYorkTimesKeywords } from "../../thirdPartyAPI/news/NewYorkTimes/services";
 
 interface KeywordsState {
   keywords: string[];
@@ -32,9 +35,13 @@ export const fetchKeywords: AsyncThunk<string[], void, any> = createAsyncThunk<
     string[],
     string[]
   ] = await Promise.all([
-    fetchNewsApiKeywords(),
-    fetchTheGuardianKeywords(),
-    fetchNewYorkTimesKeywords(),
+    fetchNewsApiArticles(withDefaultQueryString()).then(extractNewsApiKeywords),
+    fetchTheGuardianArticles(withDefaultQueryString()).then(
+      extractTheGuardianKeywords
+    ),
+    fetchNewYorkTimesArticles(withDefaultQueryString()).then(
+      extractNewYorkTimesKeywords
+    ),
   ]);
 
   const allKeywords: string[] = [
@@ -45,7 +52,7 @@ export const fetchKeywords: AsyncThunk<string[], void, any> = createAsyncThunk<
 
   const limitTo = 30;
   const uniqueKeywords: string[] = Array.from(new Set(allKeywords));
-  const sortedKeywords: string[] = randomizeItems(uniqueKeywords, limitTo);
+  const sortedKeywords: string[] = fetchRandomSubset(uniqueKeywords, limitTo);
 
   return sortedKeywords;
 });
