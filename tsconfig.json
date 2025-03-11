@@ -5,13 +5,14 @@
     "module": "esnext",
     "moduleResolution": "node",
     "strict": true,
-    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
   },
   "include": ["src"],
   "references": [
