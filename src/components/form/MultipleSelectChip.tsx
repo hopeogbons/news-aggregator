@@ -6,6 +6,7 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
+import { Tooltip } from "@mui/material";
 
 interface MultipleSelectChipProps {
   options: string[];
@@ -51,7 +52,25 @@ const MultipleSelectChip: FC<MultipleSelectChipProps> = ({
         renderValue={(selected) => (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
             {selected.map((value) => (
-              <Chip key={value} label={value} />
+              <Tooltip
+                key={value}
+                title={value}
+                slotProps={{
+                  tooltip: { sx: { borderRadius: 10 } },
+                }}
+                disableInteractive
+              >
+                <Chip
+                  key={value}
+                  label={value}
+                  sx={{
+                    maxWidth: { xs: 200, lg: 280 },
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                  }}
+                />
+              </Tooltip>
             ))}
           </Box>
         )}

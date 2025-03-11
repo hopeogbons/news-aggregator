@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Checkbox,
@@ -7,6 +7,7 @@ import {
   FormGroup,
   Skeleton,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import HomeLayout from "../layouts/HomeLayout";
 import FieldsetWithLegend from "../form/FieldsetWithLegend";
@@ -15,11 +16,8 @@ import { fetchCategories } from "../../redux/slices/categoriesSlice";
 import { fetchAuthors } from "../../redux/slices/authorsSlice";
 import { fetchKeywords } from "../../redux/slices/keywordsSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import styled from "styled-components";
 
-const ChipSkeleton = styled(Skeleton)({
-  borderRadius: "15px",
-});
+const SKELETON_WIDTHS = [100, 40, 110, 60, 90, 90, 60, 80, 70, 110];
 
 const HomePage = () => {
   const dispatch = useAppDispatch();
@@ -54,10 +52,52 @@ const HomePage = () => {
   }, [categoriesLoading, categoriesError, categories]);
 
   useEffect(() => {
-    if (!authorsLoading && !authorsError && categories.length > 0) {
+    if (!authorsLoading && !authorsError && authors.length > 0) {
       setSelectedAuthors(authors.slice(0, 10));
     }
   }, [authorsLoading, authorsError, authors]);
+
+  const renderSkeletons = useMemo(
+    () => () =>
+      SKELETON_WIDTHS.map((width, i) => (
+        <Skeleton
+          key={i}
+          variant="rounded"
+          animation="wave"
+          height={30}
+          width={width}
+          sx={{ borderRadius: "15px" }}
+        />
+      )),
+    []
+  );
+
+  const keywordChips = useMemo(
+    () =>
+      keywords.map((keyword) => (
+        <Tooltip
+          key={keyword}
+          title={keyword}
+          slotProps={{ tooltip: { sx: { borderRadius: 10 } } }}
+          disableInteractive
+        >
+          <Chip
+            key={keyword}
+            label={keyword}
+            variant="outlined"
+            sx={{
+              mb: "8px !important",
+              textOverflow: "ellipsis",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              maxWidth: { xs: 150, lg: 300 },
+            }}
+            onClick={() => {}}
+          />
+        </Tooltip>
+      )),
+    [keywords]
+  );
 
   return (
     <HomeLayout>
@@ -65,7 +105,6 @@ const HomePage = () => {
         sx={{
           display: "flex",
           flexDirection: { xs: "column-reverse", md: "row" },
-          height: { xs: "inherit" }, // md: "85vh"
           justifyContent: "space-between",
           gap: { xs: "1.2em", md: "0.8em" },
         }}
@@ -75,51 +114,38 @@ const HomePage = () => {
             display: "flex",
             flexDirection: "column",
             width: { md: "25%" },
-            alignContent: "space-between",
             gap: { xs: "1.2em", md: "1em" },
           }}
         >
           <FieldsetWithLegend title="News Sources:" sx={{ p: "20px" }}>
             <FormGroup>
+              {["The Guardian", "NewsAPI", "New York Times"].map((source) => (
               <FormControlLabel
+                  key={source}
                 control={<Checkbox defaultChecked />}
-                label="The Guardian"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="NewsAPI"
-              />
-              <FormControlLabel
-                control={<Checkbox defaultChecked />}
-                label="New York Times"
-              />
+                  label={source}
+                  name={source.toLowerCase().replace(" ", "")}
+                />
+              ))}
               <FormControlLabel
                 control={<Checkbox disabled />}
                 label="BBC News"
+                name="bbcnews"
               />
             </FormGroup>
           </FieldsetWithLegend>
+
           <FieldsetWithLegend title="Categories:">
             {categoriesLoading ? (
               <Box
                 sx={{
                   display: "flex",
-                  alignContent: "space-between",
                   flexWrap: "wrap",
                   gap: "5px",
                   p: "0.8em 0.6em",
                 }}
               >
-                {[100, 40, 110, 60, 90, 90, 60, 80, 70, 110].map(
-                  (skeletonWidth) => (
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                      width={skeletonWidth}
-                />
-                  )
-                )}
+                {renderSkeletons()}
               </Box>
             ) : (
               <MultipleSelectChip
@@ -129,27 +155,18 @@ const HomePage = () => {
               />
             )}
           </FieldsetWithLegend>
+
           <FieldsetWithLegend title="Authors:">
             {authorsLoading ? (
               <Box
                 sx={{
                   display: "flex",
-                  alignContent: "space-between",
                   flexWrap: "wrap",
                   gap: "5px",
                   p: "0.8em 0.6em",
                 }}
               >
-                {[90, 90, 100, 90, 130, 110, 130, 140, 90, 110].map(
-                  (skeletonWidth) => (
-                <ChipSkeleton
-                  variant="rounded"
-                  animation="wave"
-                  height={30}
-                      width={skeletonWidth}
-                />
-                  )
-                )}
+                {renderSkeletons()}
               </Box>
             ) : (
               <MultipleSelectChip
@@ -160,41 +177,29 @@ const HomePage = () => {
             )}
           </FieldsetWithLegend>
         </Box>
-        <Box
-          sx={{
-            width: { md: "50%" },
-            height: { xs: "100%", md: "auto" },
-          }}
-        >
+
+        <Box sx={{ width: { md: "50%" } }}>
           <FieldsetWithLegend title="News Feed:">
             Donald Trump
           </FieldsetWithLegend>
         </Box>
-        <Box
-          sx={{
-            width: { md: "25%" },
-          }}
-        >
+
+        <Box sx={{ width: { md: "25%" } }}>
           <FieldsetWithLegend title="Keywords:" sx={{ p: "20px" }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
             {keywordsLoading ? (
-              <></>
+                renderSkeletons()
             ) : (
             <Stack
               direction="row"
               spacing={1}
               flexWrap="wrap"
-              sx={{ mt: "8px", justifyContent: "flex-start" }}
+                  sx={{ mt: "8px" }}
             >
-                {keywords.map((keyword) => (
-              <Chip
-                    label={keyword}
-                variant="outlined"
-                sx={{ mb: "8px !important" }}
-                onClick={() => {}}
-              />
-                ))}
+                  {keywordChips}
             </Stack>
             )}
+            </Box>
           </FieldsetWithLegend>
         </Box>
       </Box>
