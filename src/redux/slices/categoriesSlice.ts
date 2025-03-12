@@ -1,63 +1,57 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  PayloadAction,
-  AsyncThunk,
-  SliceSelectors,
-  Slice,
-} from "@reduxjs/toolkit";
 import { fetchNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/api";
 import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
-import { extractTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian/services";
-import { extractNewsApiCategories } from "../../thirdPartyAPI/news/NewsAPI/services";
-import { extractNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/services";
+import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
 
 interface CategoriesState {
-  categories: string[];
+  mergedCategories: string[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CategoriesState = {
-  categories: [],
+  mergedCategories: [],
   loading: false,
   error: null,
 };
+export const fetchCategories = createAsyncThunk<
+  { mergedCategories: string[] },
+  void,
+  { state: RootState }
+>("categories/fetch", async (_, { getState, rejectWithValue }) => {
+  try {
+    const { sources } = getState();
+    const selectedSources: string[] = sources.sources || [];
 
-export const fetchCategories: AsyncThunk<string[], void, any> =
-  createAsyncThunk<string[], void>("categories/fetch", async () => {
-    const [newsApiCategories, theGuardianCategories, newYorkTimesCategories]: [
-      string[],
-      string[],
-      string[]
-    ] = await Promise.all([
-      fetchNewsApiCategories().then(extractNewsApiCategories),
-      fetchTheGuardianCategories().then(extractTheGuardianCategories),
-      fetchNewYorkTimesArticles().then(extractNewYorkTimesCategories),
+    const fetchPromises = new Map<string, Promise<string[]>>([
+      ["newsAPI", fetchNewsApiCategories()],
+      ["theGuardian", fetchTheGuardianCategories()],
+      ["newYorkTimes", fetchNewYorkTimesCategories()],
     ]);
 
-    const allCategories: string[] = [
-      ...newsApiCategories,
-      ...theGuardianCategories,
-      ...newYorkTimesCategories,
-    ];
-
-    const uniqueCategories: string[] = Array.from(new Set(allCategories));
-    const sortedCategories: string[] = uniqueCategories.sort(
-      (a: string, b: string) => a.localeCompare(b)
+    const results = await Promise.allSettled(
+      selectedSources.map((source) => fetchPromises.get(source))
     );
 
-    return sortedCategories;
-  });
+    const mergedCategories = Array.from(
+      new Set(
+        results.reduce((acc, result) => {
+          if (result.status === "fulfilled" && result.value) {
+            acc.push(...result.value);
+          }
+          return acc;
+        }, [] as string[])
+      )
+    );
 
-const categoriesSlice: Slice<
-  CategoriesState,
-  {},
-  "categories",
-  "categories",
-  SliceSelectors<CategoriesState>
-> = createSlice({
+    return { mergedCategories };
+  } catch (error) {
+    return rejectWithValue("Failed to fetch categories");
+  }
+});
+
+export const categoriesSlice = createSlice({
   name: "categories",
   initialState,
   reducers: {},
@@ -69,17 +63,21 @@ const categoriesSlice: Slice<
       })
       .addCase(
         fetchCategories.fulfilled,
-        (state, action: PayloadAction<string[]>) => {
+        (
+          state,
+          action: PayloadAction<{
+            mergedCategories: string[];
+          }>
+        ) => {
           state.loading = false;
-          state.categories = action.payload;
+          state.mergedCategories = action.payload.mergedCategories;
         }
       )
-      .addCase(fetchCategories.rejected, (state) => {
+      .addCase(fetchCategories.rejected, (state, action) => {
         state.loading = false;
-        state.error = "Failed to fetch categories";
+        state.error = action.payload as string;
       });
   },
 });
 
-export type { CategoriesState };
 export default categoriesSlice.reducer;

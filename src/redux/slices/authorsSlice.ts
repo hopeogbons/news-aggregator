@@ -1,66 +1,56 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  PayloadAction,
-  AsyncThunk,
-  Slice,
-  SliceSelectors,
-} from "@reduxjs/toolkit";
-import { fetchNewsApiArticles } from "../../thirdPartyAPI/news/NewsAPI/api";
-import { fetchTheGuardianArticles } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
-import { extractNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/services";
-import { extractTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/services";
-import { withDefaultQueryString } from "../../utils";
-import { extractNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/services"
+import { fetchNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/api";
+import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/api";
+import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/api";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
 
 interface AuthorsState {
-  authors: string[];
+  mergedAuthors: string[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AuthorsState = {
-  authors: [],
+  mergedAuthors: [],
   loading: false,
   error: null,
 };
 
-export const fetchAuthors: AsyncThunk<string[], void, any> = createAsyncThunk<
-  string[],
-  void
->("authors/fetch", async () => {
-  const [newsApiAuthors, theGuardianAuthors, newYorkTimesAuthors]: [
-    string[],
-    string[],
-    string[]
-  ] = await Promise.all([
-    fetchNewsApiArticles(withDefaultQueryString()).then(extractNewsApiAuthors),
-    fetchTheGuardianArticles().then(extractTheGuardianAuthors),
-    fetchNewYorkTimesArticles().then(extractNewYorkTimesAuthors),
-  ]);
+export const fetchAuthors = createAsyncThunk<
+  { mergedAuthors: string[] },
+  void,
+  { state: RootState }
+>("authors/fetch", async (_, { getState, rejectWithValue }) => {
+  try {
+    const { sources } = getState();
+    const selectedSources: string[] = sources.sources || [];
 
-  const allAuthors: string[] = [
-    ...newsApiAuthors,
-    ...theGuardianAuthors,
-    ...newYorkTimesAuthors,
-  ];
+    const fetchPromises = new Map<string, Promise<string[]>>([
+      ["newsAPI", fetchNewsApiAuthors()],
+      ["theGuardian", fetchTheGuardianAuthors()],
+      ["newYorkTimes", fetchNewYorkTimesAuthors()],
+    ]);
 
-  const uniqueAuthors: string[] = Array.from(new Set(allAuthors));
-  const sortedAuthors: string[] = uniqueAuthors.sort((a: string, b: string) =>
-    a.localeCompare(b)
-  );
+    const results = await Promise.allSettled(
+      selectedSources.map((source) => fetchPromises.get(source))
+    );
 
-  return sortedAuthors;
+    let merged: string[] = [];
+    results.forEach((result) => {
+      if (result.status === "fulfilled" && result.value) {
+        merged = merged.concat(result.value);
+      }
+    });
+
+    const mergedAuthors = Array.from(new Set(merged));
+
+    return { mergedAuthors };
+  } catch (error) {
+    return rejectWithValue("Failed to fetch authors");
+  }
 });
 
-const authorsSlice: Slice<
-  AuthorsState,
-  {},
-  "authors",
-  "authors",
-  SliceSelectors<AuthorsState>
-> = createSlice({
+export const authorsSlice = createSlice({
   name: "authors",
   initialState,
   reducers: {},
@@ -72,17 +62,21 @@ const authorsSlice: Slice<
       })
       .addCase(
         fetchAuthors.fulfilled,
-        (state, action: PayloadAction<string[]>) => {
+        (
+          state,
+          action: PayloadAction<{
+            mergedAuthors: string[];
+          }>
+        ) => {
           state.loading = false;
-          state.authors = action.payload;
+          state.mergedAuthors = action.payload.mergedAuthors;
         }
       )
-      .addCase(fetchAuthors.rejected, (state) => {
+      .addCase(fetchAuthors.rejected, (state, action) => {
         state.loading = false;
-        state.error = "Failed to fetch authors";
+        state.error = action.payload as string;
       });
   },
 });
 
-export type { AuthorsState };
 export default authorsSlice.reducer;
