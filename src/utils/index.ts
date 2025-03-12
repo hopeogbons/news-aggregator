@@ -15,8 +15,7 @@ export const fetchRandomSubset = <T>(arr: T[], num: number): T[] => {
 export const requestApi = async <T>(
   url: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
-  params: Record<string, any> = {},
-  errorMessage: string = "Failed to query endpoint"
+  params: Record<string, any> = {}
 ): Promise<T | null> => {
   try {
     const config: AxiosRequestConfig = {
@@ -27,17 +26,8 @@ export const requestApi = async <T>(
 
     const response: AxiosResponse<T> = await axios.request<T>(config);
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(
-        `${errorMessage}: ${method} ${url}`,
-        error.response?.data || error.message
-      );
-    } else {
-      console.error(`${errorMessage}: ${method} ${url}`, error);
-    }
+  } catch (error: any) {
+    console.error(`${method}: ${url}`, error.response?.data || error.message);
     return null;
   }
 };
-
-export const withDefaultQueryString = () => "world news";
