@@ -1,19 +1,24 @@
 export interface NewsApiSource {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
   category: string;
+  language: string;
+  country: string;
 }
-export interface NewsApiSourceResponse {
+export interface NewsApiSourcesResponse {
+  status: string;
   sources: NewsApiSource[];
 }
 
 export interface NewsApiArticle {
   author: string | null;
   title: string;
-  description: string;
-  url: string;
-  publishedAt: string;
-  source?: string;
+  [key: string]: any;
 }
-export interface NewsApiArticleResponse {
+
+export interface NewsApiEverythingResponse {
   status: string;
   totalResults: number;
   articles: NewsApiArticle[];

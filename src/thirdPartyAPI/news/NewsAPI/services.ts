@@ -46,7 +46,7 @@ export const extractNewsApiCategories = (sources: NewsApiSource[]): string[] =>
 export const extractNewsApiKeywords = (
   articles: NewsApiArticle[]
 ): string[] => {
-  const limitTo = 65;
+  const limitTo = 35;
   const keywordSet = new Set<string>();
   const minHeap = new MinHeap<string>((a, b) => a.length - b.length);
 
