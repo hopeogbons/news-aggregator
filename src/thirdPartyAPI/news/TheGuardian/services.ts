@@ -1,11 +1,11 @@
 import { PREFERRED_CATEGORIES } from "./constants";
-import { TheGuardianArticle, TheGuardianSection } from "./types";
+import { TheGuardianAuthorTag, TheGuardianSection } from "./types";
 
 export const extractTheGuardianAuthors = (
-  articles: TheGuardianArticle[]
+  articles: TheGuardianAuthorTag[]
 ): string[] =>
   articles.reduce<string[]>(
-    (authors: string[], article: TheGuardianArticle) => {
+    (authors: string[], article: TheGuardianAuthorTag) => {
       if (article.fields?.byline) {
         article.fields.byline
           .split(/\s*,\s*|\s+and\s+/)
@@ -32,10 +32,10 @@ export const extractTheGuardianAuthors = (
   );
 
 export const extractTheGuardianKeywords = (
-  articles: TheGuardianArticle[]
+  articles: TheGuardianAuthorTag[]
 ): string[] =>
   articles.reduce<string[]>(
-    (keywords: string[], article: TheGuardianArticle) => {
+    (keywords: string[], article: TheGuardianAuthorTag) => {
       article.tags.forEach((tag: { webTitle: string | null; type: string }) => {
         if (tag.webTitle) {
           keywords.push(tag.webTitle);

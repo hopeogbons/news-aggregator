@@ -1,63 +1,76 @@
-import {
-  TheGuardianArticle,
-  TheGuardianArticleResponse,
-  TheGuardianSection,
-} from "./types";
-import { TheGuardianSectionResponse } from "./types";
-import { API_KEY, SEARCH_URL, SECTIONS_URL } from "./constants";
+import { TheGuardianSectionsResponse, TheGuardianTagsResponse } from "./types";
 import { requestApi } from "../../../utils";
+import {
+  API_KEY,
+  THEGUARDIAN_SECTIONS_V2,
+  THEGUARDIAN_TAGS_V2,
+} from "./constants";
+import {
+  extractTheGuardianAuthors,
+  extractTheGuardianCategories,
+} from "./services";
 
-export const fetchTheGuardianCategories = async (): Promise<
-  TheGuardianSection[]
-> => {
-  const data = await requestApi<TheGuardianSectionResponse>(
-    SECTIONS_URL,
-    "GET",
-    { "api-key": API_KEY },
-    "Failed to fetch The Guardian categories"
-  );
+export const fetchTheGuardianCategories = async (): Promise<string[]> => {
+  let theGuardianCategories: string[] = JSON.parse(
+    localStorage.getItem("theGuardianCategories") || "[]"
+  ) as string[];
 
-  return data?.response?.results ?? [];
+  if (theGuardianCategories.length === 0) {
+    try {
+      const params: Record<string, string> = { "api-key": API_KEY };
+      const data: TheGuardianSectionsResponse | null =
+        await requestApi<TheGuardianSectionsResponse>(
+          THEGUARDIAN_SECTIONS_V2,
+          "GET",
+          params
+        );
+
+      theGuardianCategories = extractTheGuardianCategories(
+        data?.response.results ?? []
+      );
+      localStorage.setItem(
+        "theGuardianCategories",
+        JSON.stringify(theGuardianCategories)
+      );
+    } catch (error) {
+      console.error("Error fetching The Guardian Categories: ", error);
+      theGuardianCategories = [];
+    }
+  }
+
+  return theGuardianCategories;
 };
 
-export const fetchTheGuardianArticles = async (
-  query?: string
-): Promise<TheGuardianArticle[]> => {
-  const params: Record<string, string> = {
-    "show-fields": "byline",
-    "show-tags": "contributor,keyword",
-    "api-key": API_KEY,
-  };
-  if (query) params.q = query;
+export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
+  let theGuardianAuthors: string[] = JSON.parse(
+    localStorage.getItem("theGuardianAuthors") || "[]"
+  ) as string[];
 
-  const data: TheGuardianArticleResponse | null =
-    await requestApi<TheGuardianArticleResponse>(
-      SEARCH_URL,
-      "GET",
-      params,
-      "Failed to fetch The Guardian articles"
-    );
+  if (theGuardianAuthors.length === 0) {
+    try {
+      const params: Record<string, string> = {
+        type: "contributor",
+        "api-key": API_KEY,
+      };
+      const data: TheGuardianTagsResponse | null =
+        await requestApi<TheGuardianTagsResponse>(
+          THEGUARDIAN_TAGS_V2,
+          "GET",
+          params
+        );
 
-  return data?.response?.results ?? [];
+      theGuardianAuthors = extractTheGuardianAuthors(
+        data?.response.results ?? []
+      );
+      localStorage.setItem(
+        "theGuardianAuthors",
+        JSON.stringify(theGuardianAuthors)
+      );
+    } catch (error) {
+      console.error("Error fetching The Guardian Authors: ", error);
+      theGuardianAuthors = [];
+    }
+  }
+
+  return theGuardianAuthors;
 };
-
-/*
-  ### fetchGuardianArticles
-  
-    // Filter results to ensure they match at least one category and one author
-    const filteredArticles = response.data.response.results.filter(
-      (article: any) => {
-        const matchesCategory = categories.some(
-          (cat) =>
-            article.webTitle.includes(cat) ||
-            article.fields?.trailText?.includes(cat)
-        );
-        const matchesAuthor = authors.some((author) =>
-          article.fields?.byline?.includes(author)
-        );
-        return matchesCategory && matchesAuthor;
-      }
-    );
-
-    return filteredArticles;
-*/

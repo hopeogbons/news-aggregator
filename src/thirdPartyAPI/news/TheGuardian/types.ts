@@ -1,28 +1,28 @@
 export interface TheGuardianSection {
   id: string;
+  webTitle: string;
+  webUrl: string;
+  apiUrl: string;
+  editions?: any[];
 }
-export interface TheGuardianSectionResponse {
+
+export interface TheGuardianSectionsResponse {
   response: {
+    status: string;
     results: TheGuardianSection[];
   };
 }
 
-export interface TheGuardianArticle {
-  tags: {
-    webTitle: string | null;
-    type: string;
-  }[];
+export interface TheGuardianAuthorTag {
+  id: string;
+  type: string;
   webTitle: string;
-  fields?: {
-    byline?: string;
-  };
-  webUrl: string;
-  webPublicationDate: string;
+  [key: string]: any;
 }
-export interface TheGuardianArticleResponse {
+
+export interface TheGuardianTagsResponse {
   response: {
     status: string;
-    total: number;
-    results: TheGuardianArticle[];
+    results: TheGuardianAuthorTag[];
   };
 }
