@@ -1,13 +1,16 @@
 export interface NewYorkTimesSection {
-  section_name: string;
-}
-export interface NewYorkTimesSectionResponse {
-  response: {
-    docs: NewYorkTimesSection[];
-  };
+  section: string;
+  display_name: string;
+  url: string;
+  subsection?: string;
 }
 
-export interface NewYorkTimesArticle {
+export interface NewYorkTimesSectionResponse {
+  status: string;
+  results: NewYorkTimesSection[];
+}
+
+export interface NewYorkTimesSearch {
   byline: {
     original: string | null;
   };
@@ -20,9 +23,10 @@ export interface NewYorkTimesArticle {
   pub_date: string;
   section_name?: string;
 }
-export interface NewYorkTimesArticleResponse {
+
+export interface NewYorkTimesSearchResponse {
   status: string;
   response: {
-    docs: NewYorkTimesArticle[];
+    docs: NewYorkTimesSearch[];
   };
 }

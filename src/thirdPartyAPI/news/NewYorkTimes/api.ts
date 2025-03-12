@@ -1,56 +1,73 @@
-import {
-  NewYorkTimesArticle,
-  NewYorkTimesArticleResponse,
-  NewYorkTimesSectionResponse,
-} from "./types";
-import { API_KEY, ARTICLE_SEARCH_URL_V2 } from "./constants";
+import { NewYorkTimesSearchResponse } from "./types";
 import { requestApi } from "../../../utils";
+import { API_KEY, NEWYORKTIMES_SEARCH_V2 } from "./constants";
+import {
+  extractNewYorkTimesAuthors,
+  extractNewYorkTimesCategories,
+} from "./services";
 
-export const fetchNewYorkTimesArticles = async (
-  query?: string
-): Promise<NewYorkTimesArticle[]> => {
-  const params: Record<string, string> = {
-    sortBy: "relevancy",
-    "api-key": API_KEY,
-    apiKey: API_KEY,
-  };
-  if (query) params.q = query;
+export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
+  let newYorkTimesCategories: string[] = JSON.parse(
+    localStorage.getItem("newYorkTimesCategories") || "[]"
+  ) as string[];
 
-  const data: NewYorkTimesArticleResponse | null =
-    await requestApi<NewYorkTimesArticleResponse>(
-      ARTICLE_SEARCH_URL_V2,
-      "GET",
-      params,
-      "Failed to fetch New York Times articles"
-    );
+  if (newYorkTimesCategories.length === 0) {
+    try {
+      const params: Record<string, string> = { "api-key": API_KEY };
+      const data: NewYorkTimesSearchResponse | null =
+        await requestApi<NewYorkTimesSearchResponse>(
+          NEWYORKTIMES_SEARCH_V2,
+          "GET",
+          params
+        );
 
-  return data?.response?.docs ?? [];
+      newYorkTimesCategories = extractNewYorkTimesCategories(
+        data?.response?.docs ?? []
+      );
+      localStorage.setItem(
+        "newYorkTimesCategories",
+        JSON.stringify(newYorkTimesCategories)
+      );
+    } catch (error) {
+      console.error("Error fetching New York Times Categories: ", error);
+      newYorkTimesCategories = [];
+    }
+  }
+
+  return newYorkTimesCategories;
 };
 
-/*
- # Articles extraction, future use
+export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
+  let newYorkTimesAuthors: string[] = JSON.parse(
+    localStorage.getItem("newYorkTimesAuthors") || "[]"
+  ) as string[];
 
-  const filteredArticles: NewYorkTimesArticle[] = data.response.docs.filter(
-    (article: NewYorkTimesArticle) => {
-      const matchesCategory: boolean = categories.some(
-        (category: string) =>
-          article.headline.main.includes(category) ||
-          article.abstract.includes(category)
+  if (newYorkTimesAuthors.length === 0) {
+    try {
+      const params: Record<string, string> = {
+        q: "world news",
+        "api-key": API_KEY,
+      };
+      const data: NewYorkTimesSearchResponse | null =
+        await requestApi<NewYorkTimesSearchResponse>(
+          NEWYORKTIMES_SEARCH_V2,
+          "GET",
+          params
+        );
+
+      newYorkTimesAuthors = extractNewYorkTimesAuthors(
+        data?.response.docs ?? []
       );
-      const matchesAuthor: boolean = authors.some((author: string) =>
-        article.byline?.original?.includes(author)
+
+      localStorage.setItem(
+        "newYorkTimesAuthors",
+        JSON.stringify(newYorkTimesAuthors)
       );
-      return matchesCategory && matchesAuthor;
+    } catch (error) {
+      console.error("Error fetching New York Times Authors: ", error);
+      newYorkTimesAuthors = [];
     }
-  );
+  }
 
-  const articles: NewYorkTimesArticle[] = filteredArticles.map(
-    (article: NewYorkTimesArticle) => ({
-      ...article,
-      source: "New York Times",
-      publishedAt: article.pub_date,
-    })
-  );
-
-  return articles;
-*/
+  return newYorkTimesAuthors;
+};

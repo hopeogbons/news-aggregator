@@ -1,18 +1,10 @@
-import { NewYorkTimesArticle } from "./types";
-
-/*export const extractNewYorkTimesAuthors = (
-  articles: NewYorkTimesArticle[]
-): string[] =>
-  articles
-    .map((article: NewYorkTimesArticle) => article.byline?.original)
-    .filter((original: string | null): original is string => original !== null)
-    .map((original: string) => original.replace(/^By\s+/i, ""));*/
+import { NewYorkTimesSearch } from "./types";
 
 export const extractNewYorkTimesAuthors = (
-  articles: NewYorkTimesArticle[]
+  articles: NewYorkTimesSearch[]
 ): string[] =>
   articles.reduce<string[]>(
-    (authors: string[], article: NewYorkTimesArticle) => {
+    (authors: string[], article: NewYorkTimesSearch) => {
       if (article.byline?.original) {
         article.byline.original
           .replace(/^By\s+/i, "")
@@ -28,10 +20,10 @@ export const extractNewYorkTimesAuthors = (
   );
 
 export const extractNewYorkTimesCategories = (
-  articles: NewYorkTimesArticle[]
+  articles: NewYorkTimesSearch[]
 ): string[] =>
   articles.reduce<string[]>(
-    (categories: string[], article: NewYorkTimesArticle) => {
+    (categories: string[], article: NewYorkTimesSearch) => {
       if (article.section_name)
         categories.push(article.section_name.toLowerCase());
       return categories;
@@ -40,10 +32,10 @@ export const extractNewYorkTimesCategories = (
   );
 
 export const extractNewYorkTimesKeywords = (
-  articles: NewYorkTimesArticle[]
+  articles: NewYorkTimesSearch[]
 ): string[] =>
   articles.reduce<string[]>(
-    (keywords: string[], article: NewYorkTimesArticle) => {
+    (keywords: string[], article: NewYorkTimesSearch) => {
       if (article.keywords) {
         article.keywords.forEach((keyword: { name: string; value: string }) => {
           if (keyword.value) {
