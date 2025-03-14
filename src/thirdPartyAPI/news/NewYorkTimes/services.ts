@@ -1,10 +1,11 @@
-import { NewYorkTimesSearch } from "./types";
+import { NewsItem } from "../../../redux/slices/newsSlice";
+import { NewYorkTimesArticle } from "./types";
 
 export const extractNewYorkTimesAuthors = (
-  articles: NewYorkTimesSearch[]
+  articles: NewYorkTimesArticle[]
 ): string[] =>
   articles.reduce<string[]>(
-    (authors: string[], article: NewYorkTimesSearch) => {
+    (authors: string[], article: NewYorkTimesArticle) => {
       if (article.byline?.original) {
         article.byline.original
           .replace(/^By\s+/i, "")
@@ -20,10 +21,10 @@ export const extractNewYorkTimesAuthors = (
   );
 
 export const extractNewYorkTimesCategories = (
-  articles: NewYorkTimesSearch[]
+  articles: NewYorkTimesArticle[]
 ): string[] =>
   articles.reduce<string[]>(
-    (categories: string[], article: NewYorkTimesSearch) => {
+    (categories: string[], article: NewYorkTimesArticle) => {
       if (article.section_name)
         categories.push(article.section_name.toLowerCase());
       return categories;
@@ -32,10 +33,10 @@ export const extractNewYorkTimesCategories = (
   );
 
 export const extractNewYorkTimesKeywords = (
-  articles: NewYorkTimesSearch[]
+  articles: NewYorkTimesArticle[]
 ): string[] =>
   articles.reduce<string[]>(
-    (keywords: string[], article: NewYorkTimesSearch) => {
+    (keywords: string[], article: NewYorkTimesArticle) => {
       if (article.keywords) {
         article.keywords.forEach((keyword: { name: string; value: string }) => {
           if (keyword.value) {
@@ -47,3 +48,18 @@ export const extractNewYorkTimesKeywords = (
     },
     []
   );
+
+export const extractNewYorkTimesNews = (
+  articles: NewYorkTimesArticle[]
+): NewsItem[] => {
+  return articles.map((item) => ({
+    title: item.headline.main,
+    description: item.abstract || "",
+    url: item.web_url,
+    source: "New York Times",
+    publishedAt: item.pub_date,
+    category: item.section_name,
+    author: item.byline?.original || "Unknown",
+    thumbnail: item.multimedia[0]?.url || "",
+  }));
+};

@@ -1,3 +1,4 @@
+import { NewsItem } from "../../../redux/slices/newsSlice";
 import MinHeap from "../../../utils/MinHeap";
 import { NewsApiArticle, NewsApiSource } from "./types";
 import keywordExtractor from "keyword-extractor";
@@ -9,31 +10,6 @@ export const extractNewsApiAuthors = (articles: NewsApiArticle[]): string[] =>
     }
     return authors;
   }, []);
-
-export const extractNewsApiArticles = (
-  articles: NewsApiArticle[],
-  categories: string[],
-  authors: string[]
-): NewsApiArticle[] => {
-  const categorySet = new Set(categories);
-  const authorSet = new Set(authors);
-
-  return articles.reduce<NewsApiArticle[]>((filtered, article) => {
-    const matchesCategory = article.title
-      ? categorySet.has(article.title) || categorySet.has(article.description)
-      : false;
-
-    const matchesAuthor = article.author
-      ? authorSet.has(article.author)
-      : false;
-
-    if (matchesCategory && matchesAuthor) {
-      filtered.push({ ...article, source: "NewsAPI" });
-    }
-
-    return filtered;
-  }, []);
-};
 
 export const extractNewsApiCategories = (sources: NewsApiSource[]): string[] =>
   sources.reduce<string[]>((categories: string[], source: NewsApiSource) => {
@@ -75,4 +51,17 @@ export const extractNewsApiKeywords = (
   });
 
   return minHeap.toArray();
+};
+
+export const extractNewsApiNews = (articles: NewsApiArticle[]): NewsItem[] => {
+  return articles.map((item) => ({
+    title: item.title,
+    description: item.description || "",
+    url: item.url,
+    source: "NewsAPI",
+    publishedAt: item.publishedAt,
+    category: "General",
+    author: item.author || "Unknown",
+    thumbnail: item.urlToImage || "",
+  }));
 };
