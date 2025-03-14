@@ -1,14 +1,21 @@
-import { TheGuardianSectionsResponse, TheGuardianTagsResponse } from "./types";
+import {
+  TheGuardianSearchResponse,
+  TheGuardianSectionsResponse,
+  TheGuardianTagsResponse,
+} from "./types";
 import { requestApi } from "../../../utils";
 import {
   API_KEY,
+  THEGUARDIAN_SEARCH_V2,
   THEGUARDIAN_SECTIONS_V2,
   THEGUARDIAN_TAGS_V2,
 } from "./constants";
 import {
   extractTheGuardianAuthors,
   extractTheGuardianCategories,
+  extractTheGuardianNews,
 } from "./services";
+import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
 
 export const fetchTheGuardianCategories = async (): Promise<string[]> => {
   let theGuardianCategories: string[] = JSON.parse(
@@ -58,9 +65,8 @@ export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
           "GET",
           params
         );
-
       theGuardianAuthors = extractTheGuardianAuthors(
-        data?.response.results ?? []
+        data?.response?.results ?? []
       );
       localStorage.setItem(
         "theGuardianAuthors",
@@ -73,4 +79,36 @@ export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
   }
 
   return theGuardianAuthors;
+};
+
+export const fetchTheGuardianNews = async (
+  queryParams: string = "world+news",
+  newsRetrieved: NewsRetrieved
+): Promise<NewsItem[]> => {
+  let theGuardianNews: NewsItem[] = JSON.parse(
+    localStorage.getItem("theGuardianNews") || "[]"
+  ) as NewsItem[];
+
+  if (theGuardianNews.length === 0) {
+    try {
+      const { newsPerPage, numberOfPages } = newsRetrieved;
+
+      for (let page = 1; page <= newsPerPage; page++) {
+        const url = `${THEGUARDIAN_SEARCH_V2}?q=${encodeURIComponent(
+          queryParams
+        )}&page-size=${numberOfPages}&page=${page}&api-key=${API_KEY}`;
+        const response = await fetch(url);
+        const data: TheGuardianSearchResponse = await response.json();
+        theGuardianNews.push(
+          ...extractTheGuardianNews(data?.response.results ?? [])
+        );
+      }
+
+      localStorage.setItem("theGuardianNews", JSON.stringify(theGuardianNews));
+    } catch (error) {
+      console.error("Failed to fetch news:", error);
+    }
+  }
+
+  return theGuardianNews;
 };

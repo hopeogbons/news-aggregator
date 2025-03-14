@@ -4,7 +4,9 @@ import { API_KEY, NEWYORKTIMES_SEARCH_V2 } from "./constants";
 import {
   extractNewYorkTimesAuthors,
   extractNewYorkTimesCategories,
+  extractNewYorkTimesNews,
 } from "./services";
+import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
 
 export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
   let newYorkTimesCategories: string[] = JSON.parse(
@@ -70,4 +72,39 @@ export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
   }
 
   return newYorkTimesAuthors;
+};
+
+export const fetchNewYorkTimesNews = async (
+  queryParams: string = "world+news",
+  newsRetrieved: NewsRetrieved
+): Promise<NewsItem[]> => {
+  let newYorkTimesNews: NewsItem[] = JSON.parse(
+    localStorage.getItem("newYorkTimesNews") || "[]"
+  ) as NewsItem[];
+
+  if (newYorkTimesNews.length === 0) {
+    try {
+      const { newsPerPage, numberOfPages } = newsRetrieved;
+
+      for (let page = 1; page <= newsPerPage; page++) {
+        const url = `${NEWYORKTIMES_SEARCH_V2}?q=${encodeURIComponent(
+          queryParams
+        )}&page-size=${numberOfPages}&page=${page - 1}&api-key=${API_KEY}`;
+        const response = await fetch(url);
+        const data: NewYorkTimesSearchResponse = await response.json();
+        newYorkTimesNews.push(
+          ...extractNewYorkTimesNews(data?.response?.docs ?? [])
+        );
+      }
+
+      localStorage.setItem(
+        "newYorkTimesNews",
+        JSON.stringify(newYorkTimesNews)
+      );
+    } catch (error) {
+      console.error("Failed to fetch news:", error);
+    }
+  }
+
+  return newYorkTimesNews;
 };
