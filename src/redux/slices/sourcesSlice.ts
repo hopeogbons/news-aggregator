@@ -1,33 +1,36 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
 export const defaultSources = ["theGuardian", "newsAPI", "newYorkTimes"];
-
 export interface SourcesState {
-  sources: string[];
+  selectedSources: string[];
 }
 
 const savedSources: string[] | null = JSON.parse(
-  localStorage.getItem("sources") || "null"
+  localStorage.getItem("selectedSources") || "null"
 );
-
 const initialState: SourcesState = {
-  sources: savedSources !== null ? savedSources : defaultSources,
+  selectedSources: savedSources !== null ? savedSources : defaultSources,
 };
-localStorage.setItem("sources", JSON.stringify(initialState.sources));
+localStorage.setItem(
+  "selectedSources",
+  JSON.stringify(initialState.selectedSources)
+);
 
 const sourcesSlice = createSlice({
   name: "sources",
   initialState,
   reducers: {
     toggleSource: (state, action: PayloadAction<string>) => {
-      if (state.sources.includes(action.payload)) {
-        state.sources = state.sources.filter(
+      if (state.selectedSources.includes(action.payload)) {
+        state.selectedSources = state.selectedSources.filter(
           (source) => source !== action.payload
         );
       } else {
-        state.sources.push(action.payload);
+        state.selectedSources.push(action.payload);
       }
-      localStorage.setItem("sources", JSON.stringify(state.sources));
+      localStorage.setItem(
+        "selectedSources",
+        JSON.stringify(state.selectedSources)
+      );
     },
   },
 });
