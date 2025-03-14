@@ -63,11 +63,14 @@ const MultipleSelectChip: FC<MultipleSelectChipProps> = ({
                 <Chip
                   key={value}
                   label={value}
+                  variant="filled"
+                  color="primary"
                   sx={{
                     maxWidth: { xs: 200, lg: 280 },
                     overflow: "hidden",
                     whiteSpace: "nowrap",
                     textOverflow: "ellipsis",
+                    boxShadow: "0px 4px 6px -1px rgba(0, 0, 0, 0.5)",
                   }}
                 />
               </Tooltip>
