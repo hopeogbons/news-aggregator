@@ -7,15 +7,24 @@ export interface NewsApiSource {
   language: string;
   country: string;
 }
+
 export interface NewsApiSourcesResponse {
   status: string;
   sources: NewsApiSource[];
 }
 
 export interface NewsApiArticle {
+  source: {
+    id: string | null;
+    name: string;
+  };
   author: string | null;
   title: string;
-  [key: string]: any;
+  description: string | null;
+  url: string;
+  urlToImage: string | null;
+  publishedAt: string;
+  content: string | null;
 }
 
 export interface NewsApiEverythingResponse {
