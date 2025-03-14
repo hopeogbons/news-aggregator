@@ -16,7 +16,8 @@ const FieldsetWithLegend: FC<FieldsetWithLegendProps> = ({
     <Box
       sx={{
         ...{
-          border: "solid 1px #ccc",
+          border: "solid 1px",
+          borderColor: "#CCC",
           borderRadius: "15px",
           p: "10px",
           position: "relative",
@@ -31,9 +32,10 @@ const FieldsetWithLegend: FC<FieldsetWithLegendProps> = ({
           position: "absolute",
           left: "15px",
           top: { xs: "-10px", lg: "-18px" },
-          backgroundColor: "#f5f3f0",
+          backgroundColor: "background.default",
           px: "5px",
-          color: "#999",
+          fontWeight: "700",
+          color: "secondary.main",
         }}
       >
         {title}
