@@ -1,11 +1,24 @@
 import { configureStore } from "@reduxjs/toolkit";
-import rootReducer from "./rootReducer";
+import { useDispatch, useSelector } from "react-redux";
+import authorsReducer from "./slices/authorsSlice";
+import categoriesReducer from "./slices/categoriesSlice";
+import keywordsReducer from "./slices/keywordsSlice";
+import newsReducer from "./slices/newsSlice";
+import sourcesReducer from "./slices/sourcesSlice";
 
 const store = configureStore({
-  reducer: rootReducer,
+  reducer: {
+    authors: authorsReducer,
+    categories: categoriesReducer,
+    keywords: keywordsReducer,
+    news: newsReducer,
+    sources: sourcesReducer,
+  },
 });
 
-export type AppDispatchType = typeof store.dispatch;
-export type RootStateType = ReturnType<typeof store.getState>;
+type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
+export const useAppSelector = useSelector.withTypes<RootState>();
 
 export default store;
