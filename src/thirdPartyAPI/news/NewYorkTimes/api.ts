@@ -1,6 +1,13 @@
-import { NewYorkTimesSearchResponse } from "./types";
-import { requestApi } from "../../../utils";
-import { API_KEY, NEWYORKTIMES_SEARCH_V2 } from "./constants";
+import {
+  NewYorkTimesSearchResponse,
+  NewYorkTimesSectionsResponse,
+} from "./types";
+import { requestApi, validateRecords } from "../../../utils";
+import {
+  API_KEY,
+  NEWYORKTIMES_SEARCH_V2,
+  NEWYORKTIMES_SECTION_V3,
+} from "./constants";
 import {
   extractNewYorkTimesAuthors,
   extractNewYorkTimesCategories,
@@ -8,23 +15,36 @@ import {
 } from "./services";
 import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
 
-export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
+export const fetchNewYorkTimesCategories: () => Promise<{
+  newYorkTimesCategories: string[];
+  newYorkTimesCategoriesMap: Record<string, string>;
+}> = async () => {
   let newYorkTimesCategories: string[] = JSON.parse(
     localStorage.getItem("newYorkTimesCategories") || "[]"
   ) as string[];
+  let newYorkTimesCategoriesMap: Record<string, string> = JSON.parse(
+    localStorage.getItem("newYorkTimesCategoriesMap") || "[]"
+  ) as Record<string, string>;
 
   if (newYorkTimesCategories.length === 0) {
     try {
-      const params: Record<string, string> = { "api-key": API_KEY };
-      const data: NewYorkTimesSearchResponse | null =
-        await requestApi<NewYorkTimesSearchResponse>(
-          NEWYORKTIMES_SEARCH_V2,
-          "GET",
-          params
-        );
+      const params: Record<string, string> = {
+        "api-key": API_KEY,
+      };
+      const data = await requestApi<NewYorkTimesSectionsResponse>(
+        NEWYORKTIMES_SECTION_V3,
+        "GET",
+        params
+      );
 
-      newYorkTimesCategories = extractNewYorkTimesCategories(
-        data?.response?.docs ?? []
+      newYorkTimesCategoriesMap = extractNewYorkTimesCategories(
+        data?.results ?? []
+      );
+      newYorkTimesCategories = Object.values(newYorkTimesCategoriesMap);
+
+      localStorage.setItem(
+        "newYorkTimesCategoriesMap",
+        JSON.stringify(newYorkTimesCategoriesMap)
       );
       localStorage.setItem(
         "newYorkTimesCategories",
@@ -33,10 +53,11 @@ export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
     } catch (error) {
       console.error("Error fetching New York Times Categories: ", error);
       newYorkTimesCategories = [];
+      newYorkTimesCategoriesMap = {};
     }
   }
 
-  return newYorkTimesCategories;
+  return { newYorkTimesCategories, newYorkTimesCategoriesMap };
 };
 
 export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
@@ -47,18 +68,20 @@ export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
   if (newYorkTimesAuthors.length === 0) {
     try {
       const params: Record<string, string> = {
-        q: "world news",
+        q: "world+news",
         "api-key": API_KEY,
       };
-      const data: NewYorkTimesSearchResponse | null =
-        await requestApi<NewYorkTimesSearchResponse>(
-          NEWYORKTIMES_SEARCH_V2,
-          "GET",
-          params
-        );
+      const data = await requestApi<NewYorkTimesSearchResponse>(
+        NEWYORKTIMES_SEARCH_V2,
+        "GET",
+        params
+      );
 
-      newYorkTimesAuthors = extractNewYorkTimesAuthors(
-        data?.response.docs ?? []
+      const newYorkTimesAuthors = validateRecords(
+        Array.from(
+          new Set(extractNewYorkTimesAuthors(data?.response?.docs ?? []))
+        ),
+        (a: string) => !!a
       );
 
       localStorage.setItem(
@@ -87,11 +110,18 @@ export const fetchNewYorkTimesNews = async (
       const { newsPerPage, numberOfPages } = newsRetrieved;
 
       for (let page = 1; page <= newsPerPage; page++) {
-        const url = `${NEWYORKTIMES_SEARCH_V2}?q=${encodeURIComponent(
-          queryParams
-        )}&page-size=${numberOfPages}&page=${page - 1}&api-key=${API_KEY}`;
-        const response = await fetch(url);
-        const data: NewYorkTimesSearchResponse = await response.json();
+        const params: Record<string, string> = {
+          q: queryParams,
+          "page-size": `${numberOfPages}`,
+          page: `${page - 1}`,
+          fl: "headline,byline,section_name,pub_date,web_url,snippet,multimedia",
+          "api-key": API_KEY,
+        };
+        const data = await requestApi<NewYorkTimesSearchResponse>(
+          NEWYORKTIMES_SEARCH_V2,
+          "GET",
+          params
+        );
         newYorkTimesNews.push(
           ...extractNewYorkTimesNews(data?.response?.docs ?? [])
         );
