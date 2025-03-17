@@ -3,55 +3,70 @@ import { fetchTheGuardianCategories } from "../../thirdPartyAPI/news/TheGuardian
 import { fetchNewYorkTimesCategories } from "../../thirdPartyAPI/news/NewYorkTimes/api";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import { mergeRecords, sortRecords } from "../../utils";
 
-interface CategoriesState {
+export interface CategoriesState {
   mergedCategories: string[];
+  newsApiCategoriesMap: {};
+  theGuardianCategoriesMap: {};
+  newYorkTimesCategoriesMap: {};
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CategoriesState = {
   mergedCategories: [],
+  newsApiCategoriesMap: {},
+  theGuardianCategoriesMap: {},
+  newYorkTimesCategoriesMap: {},
   loading: false,
   error: null,
 };
+
 export const fetchCategories = createAsyncThunk<
-  { mergedCategories: string[] },
+  {
+    mergedCategories: string[];
+    newsApiCategoriesMap: {};
+    theGuardianCategoriesMap: {};
+    newYorkTimesCategoriesMap: {};
+  },
   void,
   { state: RootState }
 >("categories/fetch", async (_, { getState, rejectWithValue }) => {
   try {
     const { sources } = getState();
-    const selectedSources: string[] = sources.sources || [];
+    const selectedSources: string[] = sources.selectedSources || [];
 
-    const fetchPromises = new Map<string, Promise<string[]>>([
-      ["newsAPI", fetchNewsApiCategories()],
-      ["theGuardian", fetchTheGuardianCategories()],
-      ["newYorkTimes", fetchNewYorkTimesCategories()],
-    ]);
+    const { newsApiCategories, newsApiCategoriesMap } =
+      await fetchNewsApiCategories();
+    const { theGuardianCategories, theGuardianCategoriesMap } =
+      await fetchTheGuardianCategories();
+    const { newYorkTimesCategories, newYorkTimesCategoriesMap } =
+      await fetchNewYorkTimesCategories();
 
-    const results = await Promise.allSettled(
-      selectedSources.map((source) => fetchPromises.get(source))
+    const allCategories = {
+      newsAPI: newsApiCategories,
+      theGuardian: theGuardianCategories,
+      newYorkTimes: newYorkTimesCategories,
+    };
+
+    const mergedCategories: string[] = sortRecords(
+      Array.from(new Set(await mergeRecords(selectedSources, allCategories))),
+      (a: string, b: string) => a.localeCompare(b)
     );
 
-    const mergedCategories = Array.from(
-      new Set(
-        results.reduce((acc, result) => {
-          if (result.status === "fulfilled" && result.value) {
-            acc.push(...result.value);
-          }
-          return acc;
-        }, [] as string[])
-      )
-    );
-
-    return { mergedCategories };
+    return {
+      mergedCategories,
+      newsApiCategoriesMap,
+      theGuardianCategoriesMap,
+      newYorkTimesCategoriesMap,
+    };
   } catch (error) {
     return rejectWithValue("Failed to fetch categories");
   }
 });
 
-export const categoriesSlice = createSlice({
+const categoriesSlice = createSlice({
   name: "categories",
   initialState,
   reducers: {},
@@ -67,10 +82,18 @@ export const categoriesSlice = createSlice({
           state,
           action: PayloadAction<{
             mergedCategories: string[];
+            newsApiCategoriesMap: {};
+            theGuardianCategoriesMap: {};
+            newYorkTimesCategoriesMap: {};
           }>
         ) => {
           state.loading = false;
           state.mergedCategories = action.payload.mergedCategories;
+          state.newsApiCategoriesMap = action.payload.newsApiCategoriesMap;
+          state.theGuardianCategoriesMap =
+            action.payload.theGuardianCategoriesMap;
+          state.newYorkTimesCategoriesMap =
+            action.payload.newYorkTimesCategoriesMap;
         }
       )
       .addCase(fetchCategories.rejected, (state, action) => {
