@@ -1,53 +1,40 @@
-export interface NewYorkTimesArticle {
+export interface NewYorkTimesSection {
+  section: string;
+  display_name: string;
+}
+
+export interface NewYorkTimesSectionsResponse {
+  status: string;
+  copyright: string;
+  num_results: number;
+  results: NewYorkTimesSection[];
+}
+
+export interface NewYorkTimesArticleSearch {
   abstract: string;
-  web_url: string;
+  url: string;
   snippet: string;
   lead_paragraph: string;
   source: string;
-  multimedia: {
+  multimedia: Array<{
     url: string;
-    format: string;
-    height: number;
-    width: number;
-    type: string;
     subtype: string;
-    caption: string;
-    copyright: string;
-  }[];
+  }>;
   headline: {
     main: string;
-    kicker: string | null;
-    content_kicker: string | null;
-    print_headline: string | null;
-    name: string | null;
-    seo: string | null;
-    sub: string | null;
   };
-  keywords: {
+  keywords: Array<{
     name: string;
     value: string;
     rank: number;
     major: string;
-  }[];
+  }>;
   pub_date: string;
-  document_type: string;
-  news_desk: string;
   section_name: string;
   subsection_name: string | null;
   byline: {
     original: string | null;
-    person: {
-      firstname: string | null;
-      middlename: string | null;
-      lastname: string | null;
-      qualifier: string | null;
-      title: string | null;
-      role: string;
-      organization: string;
-      rank: number;
-    }[];
   };
-  type_of_material: string;
   _id: string;
   word_count: number;
   uri: string;
@@ -57,11 +44,26 @@ export interface NewYorkTimesSearchResponse {
   status: string;
   copyright: string;
   response: {
-    docs: NewYorkTimesArticle[];
+    docs: NewYorkTimesArticleSearch[];
     meta: {
       hits: number;
       offset: number;
       time: number;
     };
   };
+}
+
+export interface NewYorkTimesArticle {
+  title: string;
+  byline: string;
+  published_date: string;
+}
+
+export interface NewYorkTimesArticlesResponse {
+  status: string;
+  copyright: string;
+  section: string;
+  last_updated: string;
+  num_results: number;
+  results: NewYorkTimesArticle[];
 }
