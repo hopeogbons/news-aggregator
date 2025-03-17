@@ -3,8 +3,9 @@ import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/ap
 import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/api";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import { mergeRecords, sortRecords } from "../../utils";
 
-interface AuthorsState {
+export interface AuthorsState {
   mergedAuthors: string[];
   loading: boolean;
   error: string | null;
@@ -23,26 +24,18 @@ export const fetchAuthors = createAsyncThunk<
 >("authors/fetch", async (_, { getState, rejectWithValue }) => {
   try {
     const { sources } = getState();
-    const selectedSources: string[] = sources.sources || [];
+    const selectedSources: string[] = sources.selectedSources || [];
 
-    const fetchPromises = new Map<string, Promise<string[]>>([
-      ["newsAPI", fetchNewsApiAuthors()],
-      ["theGuardian", fetchTheGuardianAuthors()],
-      ["newYorkTimes", fetchNewYorkTimesAuthors()],
-    ]);
+    const fetchPromises: Record<string, string[]> = {
+      newsAPI: await fetchNewsApiAuthors(),
+      theGuardian: await fetchTheGuardianAuthors(),
+      newYorkTimes: await fetchNewYorkTimesAuthors(),
+    };
 
-    const results = await Promise.allSettled(
-      selectedSources.map((source) => fetchPromises.get(source))
+    const mergedAuthors: string[] = sortRecords(
+      Array.from(new Set(await mergeRecords(selectedSources, fetchPromises))),
+      (a, b) => a.localeCompare(b)
     );
-
-    let merged: string[] = [];
-    results.forEach((result) => {
-      if (result.status === "fulfilled" && result.value) {
-        merged = merged.concat(result.value);
-      }
-    });
-
-    const mergedAuthors = Array.from(new Set(merged));
 
     return { mergedAuthors };
   } catch (error) {
@@ -50,7 +43,7 @@ export const fetchAuthors = createAsyncThunk<
   }
 });
 
-export const authorsSlice = createSlice({
+const authorsSlice = createSlice({
   name: "authors",
   initialState,
   reducers: {},
