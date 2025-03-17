@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import keyword_extractor from "keyword-extractor";
 
 export const shuffleRecords = <T>(records: T[]): T[] => {
   // Fisher Yates' shuffle algorithm
@@ -9,37 +10,28 @@ export const shuffleRecords = <T>(records: T[]): T[] => {
   return records;
 };
 
-export const mergeRecords = async <T>(
-  selectedKeys: string[],
-  promiseMap: Map<string, Promise<T[]>>,
-  isEqual?: (a: T, b: T) => boolean,
-  validate?: (record: T) => boolean
-): Promise<T[]> => {
-  const results = await Promise.allSettled(
-    selectedKeys.map((key) => promiseMap.get(key))
-  );
+export const validateRecords = <T>(
+  records: T[],
+  validate: (record: T) => boolean
+): T[] => {
+  return records.filter(validate);
+};
 
-  let merged: T[] = [];
-  results.forEach((result) => {
-    if (result.status === "fulfilled" && result.value) {
-      const validRecords = validate
-        ? result.value.filter(validate)
-        : result.value;
-      merged = merged.concat(validRecords);
-    }
-  });
-
-  if (isEqual) {
-    const uniqueRecords: T[] = [];
-    for (const record of merged) {
-      if (!uniqueRecords.some((existing) => isEqual(existing, record))) {
-        uniqueRecords.push(record);
+export const deduplicateRecords = <T>(
+  records: T[],
+  keyFn?: (record: T) => any
+): T[] => {
+  if (keyFn) {
+    const map = new Map<any, T>();
+    for (const record of records) {
+      const key = keyFn(record);
+      if (!map.has(key)) {
+        map.set(key, record);
       }
     }
-    return uniqueRecords;
-  } else {
-    return Array.from(new Set(merged));
+    return [...map.values()];
   }
+  return [...new Set(records)];
 };
 
 export const sortRecords = <T>(
@@ -49,6 +41,24 @@ export const sortRecords = <T>(
   return sortFunction
     ? records.sort(sortFunction)
     : records.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+};
+
+export const mergeRecords = async <T>(
+  selectedKeys: string[],
+  promiseMap: Record<string, T[]>
+): Promise<T[]> => {
+  const results = await Promise.allSettled(
+    selectedKeys.map((key) => promiseMap[key])
+  );
+
+  let merged: T[] = [];
+  results.forEach((result) => {
+    if (result.status === "fulfilled" && result.value) {
+      merged = merged.concat(result.value);
+    }
+  });
+
+  return merged;
 };
 
 export const requestApi = async <T>(
@@ -71,89 +81,32 @@ export const requestApi = async <T>(
   }
 };
 
-export const STOP_WORDS: Set<string> = new Set([
-  "the",
-  "is",
-  "and",
-  "a",
-  "an",
-  "to",
-  "in",
-  "of",
-  "for",
-  "on",
-  "at",
-  "by",
-  "it",
-  "with",
-  "as",
-  "from",
-  "up",
-  "this",
-  "that",
-  "or",
-  "be",
-  "are",
-  "have",
-  "has",
-  "was",
-  "were",
-  "will",
-  "would",
-  "shall",
-  "etc",
-  "i",
-  "me",
-  "my",
-  "we",
-  "our",
-  "you",
-  "your",
-  "he",
-  "she",
-  "his",
-  "her",
-  "they",
-  "them",
-  "their",
-]);
-
-/*export const extractTopKeywordsFromTexts = (texts: string[]): string[] => {
-  const frequencyMap = new Map<string, number>();
-
-  texts.forEach((txt) => {
-    const tokens = txt
-      .toLowerCase()
-      .split(/[^a-z]+/)
-      .filter((token) => token && token.length > 2 && !STOP_WORDS.has(token));
-    tokens.forEach((token) => {
-      frequencyMap.set(token, (frequencyMap.get(token) || 0) + 1);
-    });
-  });
-
-  const sorted = Array.from(frequencyMap.entries()).sort((a, b) => b[1] - a[1]);
-
-  return sorted.slice(0, 30).map(([word]) => word);
-};*/
-
 export const extractTopKeywordsFromTexts = (
   texts: string[],
-  stopWords: Set<string>
+  limitTo: number
 ): string[] => {
-  const frequencyMap = new Map<string, number>();
+  const uniqueKeywords = new Set<string>();
 
-  const regex = /[^a-z]+/g;
-  const isStopWord = (token: string) => stopWords.has(token);
+  for (const text of texts) {
+    const keywords = keyword_extractor.extract(text, {
+      language: "en",
+      remove_digits: true,
+      return_changed_case: false,
+      remove_duplicates: true,
+      return_chained_words: true,
+    });
+    for (const keyword of keywords) {
+      uniqueKeywords.add(keyword);
+    }
+  }
 
-  const allTokens = texts
-    .flatMap((txt) => txt.toLowerCase().split(regex))
-    .filter((token) => token.length > 2 && !isStopWord(token));
+  const filteredKeywords: string[] = Array.from(uniqueKeywords).filter(
+    (keyword) => /^[A-Z]/.test(keyword)
+  );
 
-  for (const token of allTokens)
-    frequencyMap.set(token, (frequencyMap.get(token) || 0) + 1);
+  const sortedKeywords = shuffleRecords(Array.from(filteredKeywords));
 
-  const sorted = Array.from(frequencyMap).sort((a, b) => b[1] - a[1]);
-  return sorted.slice(0, 30).map(([word]) => word);
+  return sortedKeywords.slice(0, limitTo);
 };
 
 export const queryBuilder = (
@@ -161,13 +114,13 @@ export const queryBuilder = (
   selectedCategories: string[],
   selectedAuthors: string[]
 ): string => {
-  const authorQuery = selectedAuthors.length
+  const authorsQuery = selectedAuthors.length
     ? ` AND (${selectedAuthors.join(" OR ")})`
     : "";
-  const categoryQuery = selectedCategories.length
+  const categoriesQuery = selectedCategories.length
     ? ` AND (${selectedCategories.join(" OR ")})`
     : "";
-  return `${keyword}${authorQuery}${categoryQuery}`.trim();
+  return `${keyword}${authorsQuery}${categoriesQuery}`.trim();
 };
 
 export const formatDate = (dateString: string): string => {
