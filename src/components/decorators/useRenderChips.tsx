@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Chip, Tooltip } from "@mui/material";
+import { Box, Chip, Tooltip } from "@mui/material";
 
 const useRenderChips = (keywords: string[]) => {
   return useMemo(
@@ -14,13 +14,23 @@ const useRenderChips = (keywords: string[]) => {
           <Chip
             key={keyword}
             label={keyword}
-            variant="outlined"
+            variant="filled"
             sx={{
-              mb: "8px !important",
-              textOverflow: "ellipsis",
+              color: "#fff",
+              backgroundColor: "primary.main",
+              "&:hover": {
+                backgroundColor: "red",
+                color: "#fff",
+                boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                borderColor: "#fff",
+                cursor: "pointer",
+              },
               overflow: "hidden",
+              textOverflow: "ellipsis",
+              boxShadow: "0px 4px 6px -1px rgba(0, 0, 0, 0.5)",
               whiteSpace: "nowrap",
               maxWidth: { xs: 150, lg: 300 },
+              m: 0.2,
             }}
             onClick={() => {}}
           />
