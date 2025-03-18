@@ -1,10 +1,6 @@
 import { NewsItem } from "../../../redux/slices/newsSlice";
 import { extractAuthors } from "../../../utils";
-import {
-  NewYorkTimesArticle,
-  NewYorkTimesArticleSearch,
-  NewYorkTimesSection,
-} from "./types";
+import { NewYorkTimesArticleSearch, NewYorkTimesSection } from "./types";
 
 export const extractNewYorkTimesAuthors = (
   articles: NewYorkTimesArticleSearch[]

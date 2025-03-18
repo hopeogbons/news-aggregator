@@ -25,7 +25,6 @@ export const fetchKeywords = createAsyncThunk<
     const limitTo: number = 10;
 
     if (mergedNews?.length === 0) {
-      console.log("I am always trying to fetch! ", mergedNews);
       localStorage.setItem("extractedKeywords", JSON.stringify([]));
       return [];
     }
