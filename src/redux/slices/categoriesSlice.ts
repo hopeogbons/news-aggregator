@@ -5,7 +5,25 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { mergeRecords, sortRecords } from "../../utils";
 
+const defaultCategories: string[] = [
+  /*
+  "Media",
+  "Business",
+  "Education",
+  "Entertainment",
+  "Environment",
+  "General",
+  "Life and style",
+  "Music",
+  "Science",
+  "Sports",
+  "Technology",
+  "World news",
+  */
+];
+
 export interface CategoriesState {
+  selectedCategories: string[];
   mergedCategories: string[];
   newsApiCategoriesMap: {};
   theGuardianCategoriesMap: {};
@@ -14,7 +32,12 @@ export interface CategoriesState {
   error: string | null;
 }
 
+const selectedCategories: string[] = JSON.parse(
+  localStorage.getItem("selectedCategories") || "[]"
+) as string[];
 const initialState: CategoriesState = {
+  selectedCategories:
+    selectedCategories.length > 0 ? selectedCategories : defaultCategories,
   mergedCategories: [],
   newsApiCategoriesMap: {},
   theGuardianCategoriesMap: {},
@@ -22,6 +45,10 @@ const initialState: CategoriesState = {
   loading: false,
   error: null,
 };
+localStorage.setItem(
+  "selectedCategories",
+  JSON.stringify(initialState.selectedCategories)
+);
 
 export const fetchCategories = createAsyncThunk<
   {
@@ -69,7 +96,21 @@ export const fetchCategories = createAsyncThunk<
 const categoriesSlice = createSlice({
   name: "categories",
   initialState,
-  reducers: {},
+  reducers: {
+    updateSelectedCategories: (
+      state,
+      action: PayloadAction<string | string[]>
+    ) => {
+      state.selectedCategories =
+        typeof action.payload === "string"
+          ? action.payload.split(",")
+          : action.payload;
+      localStorage.setItem(
+        "selectedCategories",
+        JSON.stringify(state.selectedCategories)
+      );
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCategories.pending, (state) => {
@@ -103,4 +144,5 @@ const categoriesSlice = createSlice({
   },
 });
 
+export const { updateSelectedCategories } = categoriesSlice.actions;
 export default categoriesSlice.reducer;

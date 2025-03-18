@@ -6,22 +6,25 @@ import { useFetchCategories } from "../hooks/useFetchCategories";
 import { useAppSelector } from "../../redux/store";
 
 const NewsCategories = () => {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedData, setSelectedData] = useState<string[]>([]);
   const { mergedCategories, loading, error } = useFetchCategories();
   const selectedSources = useAppSelector(
     (state) => state.sources.selectedSources
+  );
+  const selectedCategories = useAppSelector(
+    (state) => state.categories.selectedCategories
   );
   const renderSkeletons = useRenderSkeletons();
 
   useEffect(() => {
     if (!loading && !error && mergedCategories.length > 0) {
-      setSelectedCategories(mergedCategories.slice(0, 10));
+      setSelectedData(selectedCategories);
     }
   }, [mergedCategories, error, loading]);
 
   useEffect(() => {
     if (selectedSources.length === 0) {
-      setSelectedCategories([]);
+      setSelectedData([]);
     }
   }, [selectedSources]);
 
@@ -53,8 +56,8 @@ const NewsCategories = () => {
   return (
     <MultipleSelectChip
       options={mergedCategories}
-      selectedValues={selectedCategories}
-      onChange={setSelectedCategories}
+      selectedValues={selectedData}
+      onChange={setSelectedData}
     />
   );
 };
