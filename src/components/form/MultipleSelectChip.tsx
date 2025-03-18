@@ -7,8 +7,6 @@ import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Chip from "@mui/material/Chip";
 import { Tooltip } from "@mui/material";
-import { useAppDispatch } from "../../redux/store";
-import { updateSelectedCategories } from "../../redux/slices/categoriesSlice";
 
 interface MultipleSelectChipProps {
   options: string[];
@@ -33,12 +31,10 @@ const MultipleSelectChip: FC<MultipleSelectChipProps> = ({
   selectedValues,
   onChange,
 }) => {
-  const dispatch = useAppDispatch();
   const theme = useTheme();
 
   const handleChange = (event: SelectChangeEvent<typeof selectedValues>) => {
     const { value } = event.target;
-    dispatch(updateSelectedCategories(value));
     const newSelectedValues =
       typeof value === "string" ? value.split(",") : value;
     onChange(newSelectedValues);
