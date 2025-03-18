@@ -5,22 +5,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { mergeRecords, sortRecords } from "../../utils";
 
-const defaultCategories: string[] = [
-  /*
-  "Media",
-  "Business",
-  "Education",
-  "Entertainment",
-  "Environment",
-  "General",
-  "Life and style",
-  "Music",
-  "Science",
-  "Sports",
-  "Technology",
-  "World news",
-  */
-];
+const defaultCategories: string[] = [];
 
 export interface CategoriesState {
   selectedCategories: string[];
