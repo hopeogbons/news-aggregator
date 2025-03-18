@@ -35,17 +35,30 @@ export const extractTheGuardianCategories = (
     {}
   );
 
-export const extractTheGuardianNews = (
-  articles: TheGuardianArticle[]
-): NewsItem[] => {
-  return articles.map((item) => ({
-    title: item?.webTitle ?? "",
-    description: item?.fields?.trailText ?? "",
-    url: item?.webUrl ?? "#",
-    source: "The Guardian",
-    publishedAt: item?.webPublicationDate ?? "",
-    category: item?.sectionName ?? "General",
-    author: item?.fields?.byline ?? "Unknown",
-    thumbnail: item?.fields?.thumbnail ?? "",
-  }));
+export const extractTheGuardianNews = (articles: TheGuardianArticle[]) => {
+  const theGuardian: {
+    news: NewsItem[];
+    authors: string[];
+  } = { news: [], authors: [] };
+
+  articles.forEach((item) => {
+    const authors: string[] = item?.tags?.map((tag) => tag.webTitle) ?? [];
+    const authorList =
+      authors.length > 0 ? authors : [item?.fields?.byline ?? "Unknown"];
+
+    theGuardian.news.push({
+      title: item?.webTitle ?? "",
+      description: item?.fields?.trailText ?? "",
+      url: item?.webUrl ?? "#",
+      source: "The Guardian",
+      publishedAt: item?.webPublicationDate ?? "",
+      category: item?.sectionName ?? "General",
+      author: authorList.join(", "),
+      thumbnail: item?.fields?.thumbnail ?? "",
+    });
+
+    theGuardian.authors.push(...authorList);
+  });
+
+  return theGuardian;
 };
