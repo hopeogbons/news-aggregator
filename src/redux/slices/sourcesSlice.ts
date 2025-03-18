@@ -6,7 +6,7 @@ export interface SourcesState {
 
 const savedSources: string[] | null = JSON.parse(
   localStorage.getItem("selectedSources") || "null"
-);
+) as null;
 const initialState: SourcesState = {
   selectedSources: savedSources !== null ? savedSources : defaultSources,
 };
