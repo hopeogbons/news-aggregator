@@ -3,27 +3,38 @@ import MultipleSelectChip from "./MultipleSelectChip";
 import { Alert, Box, Container } from "@mui/material";
 import { useRenderSkeletons } from "../decorators/useRenderSkeletons";
 import { useFetchAuthors } from "../hooks/useFetchAuthors";
-import { useAppSelector } from "../../redux/store";
+import { useAppDispatch, useAppSelector } from "../../redux/store";
+import { updateSelectedAuthors } from "../../redux/slices/authorsSlice";
 
 const NewsAuthors = () => {
-  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const dispatch = useAppDispatch();
+  const [selectedData, setSelectedData] = useState<string[]>([]);
   const { mergedAuthors, loading, error } = useFetchAuthors();
   const selectedSources = useAppSelector(
     (state) => state.sources.selectedSources
+  );
+  const selectedAuthors = useAppSelector(
+    (state) => state.authors.selectedAuthors
   );
   const renderSkeletons = useRenderSkeletons();
 
   useEffect(() => {
     if (!loading && !error && mergedAuthors.length > 0) {
-      setSelectedAuthors(mergedAuthors.slice(0, 10));
+      setSelectedData(selectedAuthors);
     }
   }, [mergedAuthors, error, loading]);
 
   useEffect(() => {
     if (selectedSources.length === 0) {
-      setSelectedAuthors([]);
+      setSelectedData([]);
     }
   }, [selectedSources]);
+
+  useEffect(() => {
+    if (selectedData.length > 0) {
+      dispatch(updateSelectedAuthors(selectedData));
+    }
+  }, [selectedData]);
 
   if (loading) {
     return (
@@ -53,8 +64,8 @@ const NewsAuthors = () => {
   return (
     <MultipleSelectChip
       options={mergedAuthors}
-      selectedValues={selectedAuthors}
-      onChange={setSelectedAuthors}
+      selectedValues={selectedData}
+      onChange={setSelectedData}
     />
   );
 };

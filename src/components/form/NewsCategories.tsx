@@ -3,9 +3,11 @@ import MultipleSelectChip from "./MultipleSelectChip";
 import { Alert, Box, Container } from "@mui/material";
 import { useRenderSkeletons } from "../decorators/useRenderSkeletons";
 import { useFetchCategories } from "../hooks/useFetchCategories";
-import { useAppSelector } from "../../redux/store";
+import { useAppSelector, useAppDispatch } from "../../redux/store";
+import { updateSelectedCategories } from "../../redux/slices/categoriesSlice";
 
 const NewsCategories = () => {
+  const dispatch = useAppDispatch();
   const [selectedData, setSelectedData] = useState<string[]>([]);
   const { mergedCategories, loading, error } = useFetchCategories();
   const selectedSources = useAppSelector(
@@ -27,6 +29,12 @@ const NewsCategories = () => {
       setSelectedData([]);
     }
   }, [selectedSources]);
+
+  useEffect(() => {
+    if (selectedData.length > 0) {
+      dispatch(updateSelectedCategories(selectedData));
+    }
+  }, [selectedData]);
 
   if (loading) {
     return (
