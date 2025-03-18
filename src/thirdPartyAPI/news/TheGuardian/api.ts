@@ -93,9 +93,7 @@ export const fetchTheGuardianNews = async (
     localStorage.getItem("theGuardianNews") || "[]"
   ) as NewsItem[];
 
-  let theGuardianAuthors: string[] = []; /*JSON.parse(
-    localStorage.getItem("theGuardianAuthors") || "[]"
-  ) as string[];*/
+  let theGuardianAuthors: string[] = [];
 
   if (theGuardianNews.length === 0) {
     try {
