@@ -5,7 +5,10 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { mergeRecords, sortRecords } from "../../utils";
 
+const defaultAuthors: string[] = [];
+
 export interface AuthorsState {
+  selectedAuthors: string[];
   mergedAuthors: string[];
   loading: boolean;
   error: string | null;
@@ -14,11 +17,20 @@ export interface AuthorsState {
 const mergedAuthors: string[] = JSON.parse(
   localStorage.getItem("mergedAuthors") || "[]"
 ) as string[];
+const selectedAuthors: string[] = JSON.parse(
+  localStorage.getItem("selectedAuthors") || "[]"
+) as string[];
 const initialState: AuthorsState = {
+  selectedAuthors:
+    selectedAuthors.length > 0 ? selectedAuthors : defaultAuthors,
   mergedAuthors: mergedAuthors.length > 0 ? mergedAuthors : [],
   loading: false,
   error: null,
 };
+localStorage.setItem(
+  "selectedAuthors",
+  JSON.stringify(initialState.selectedAuthors)
+);
 
 export const fetchAuthors = createAsyncThunk<
   { mergedAuthors: string[] },
@@ -49,7 +61,21 @@ export const fetchAuthors = createAsyncThunk<
 const authorsSlice = createSlice({
   name: "authors",
   initialState,
-  reducers: {},
+  reducers: {
+    updateSelectedAuthors: (
+      state,
+      action: PayloadAction<string | string[]>
+    ) => {
+      state.selectedAuthors =
+        typeof action.payload === "string"
+          ? action.payload.split(",")
+          : action.payload;
+      localStorage.setItem(
+        "selectedAuthors",
+        JSON.stringify(state.selectedAuthors)
+      );
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAuthors.pending, (state) => {
@@ -75,4 +101,5 @@ const authorsSlice = createSlice({
   },
 });
 
+export const { updateSelectedAuthors } = authorsSlice.actions;
 export default authorsSlice.reducer;
