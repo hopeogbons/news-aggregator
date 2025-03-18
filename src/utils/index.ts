@@ -146,3 +146,9 @@ export const formatDate = (dateString: string): string => {
   const ordinalSuffix: string = getOrdinalSuffix(day);
   return `${day}${ordinalSuffix} ${month}, ${year}`;
 };
+
+export const extractAuthors = (strNames: string): string[] =>
+  strNames
+    .replace(/^by\s+/i, "")
+    .split(/\s*(?:,|and)\s*/gi)
+    .filter((name) => /^[A-Z]/.test(name));
