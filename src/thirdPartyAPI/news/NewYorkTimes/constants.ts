@@ -5,13 +5,3 @@ export const NEWYORKTIMES_SEARCH_V2: string =
 
 export const NEWYORKTIMES_SECTION_V3: string =
   "https://api.nytimes.com/svc/news/v3/content/section-list.json";
-
-export const newsApiCategoriesMap: Record<string, string> = {
-  business: "Business",
-  entertainment: "Entertainment",
-  general: "General",
-  health: "Health",
-  science: "Science",
-  sports: "Sports",
-  technology: "Technology",
-};
