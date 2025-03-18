@@ -11,8 +11,11 @@ export interface AuthorsState {
   error: string | null;
 }
 
+const mergedAuthors: string[] = JSON.parse(
+  localStorage.getItem("mergedAuthors") || "[]"
+) as string[];
 const initialState: AuthorsState = {
-  mergedAuthors: [],
+  mergedAuthors: mergedAuthors.length > 0 ? mergedAuthors : [],
   loading: false,
   error: null,
 };
