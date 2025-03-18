@@ -1,20 +1,8 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  PayloadAction,
-  AsyncThunk,
-  Slice,
-  SliceSelectors,
-} from "@reduxjs/toolkit";
-import { fetchNewsApiArticles } from "../../thirdPartyAPI/news/NewsAPI/api";
-import { fetchTheGuardianArticles } from "../../thirdPartyAPI/news/TheGuardian/api";
-import { fetchNewYorkTimesArticles } from "../../thirdPartyAPI/news/NewYorkTimes/api";
-import { fetchRandomSubset, withDefaultQueryString } from "../../utils";
-import { extractTheGuardianKeywords } from "../../thirdPartyAPI/news/TheGuardian/services";
-import { extractNewsApiKeywords } from "../../thirdPartyAPI/news/NewsAPI/services";
-import { extractNewYorkTimesKeywords } from "../../thirdPartyAPI/news/NewYorkTimes/services";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
+import { extractTopKeywordsFromTexts } from "../../utils";
 
-interface KeywordsState {
+export interface KeywordsState {
   keywords: string[];
   loading: boolean;
   error: string | null;
@@ -26,44 +14,42 @@ const initialState: KeywordsState = {
   error: null,
 };
 
-export const fetchKeywords: AsyncThunk<string[], void, any> = createAsyncThunk<
+export const fetchKeywords = createAsyncThunk<
   string[],
-  void
->("keywords/fetch", async () => {
-  const [newsApiKeywords, theGuardianKeywords, newYorkTimesKeywords]: [
-    string[],
-    string[],
-    string[]
-  ] = await Promise.all([
-    fetchNewsApiArticles(withDefaultQueryString()).then(extractNewsApiKeywords),
-    fetchTheGuardianArticles(withDefaultQueryString()).then(
-      extractTheGuardianKeywords
-    ),
-    fetchNewYorkTimesArticles(withDefaultQueryString()).then(
-      extractNewYorkTimesKeywords
-    ),
-  ]);
+  void,
+  { state: RootState }
+>("keywords/fetchKeywords", async (_, { getState, rejectWithValue }) => {
+  try {
+    const { news } = getState();
+    const { mergedNews } = news;
+    const limitTo: number = 10;
 
-  const allKeywords: string[] = [
-    ...newsApiKeywords,
-    ...theGuardianKeywords,
-    ...newYorkTimesKeywords,
-  ];
+    if (mergedNews?.length === 0) {
+      console.log("I am always trying to fetch! ", mergedNews);
+      localStorage.setItem("extractedKeywords", JSON.stringify([]));
+      return [];
+    }
 
-  const limitTo = 30;
-  const uniqueKeywords: string[] = Array.from(new Set(allKeywords));
-  const sortedKeywords: string[] = fetchRandomSubset(uniqueKeywords, limitTo);
+    const texts: string[] = mergedNews.map((item) => {
+      const title = item.title ?? "";
+      const description = item.description ?? "";
+      return `${title} ${description}`;
+    });
 
-  return sortedKeywords;
+    const extractedKeywords = extractTopKeywordsFromTexts(texts, limitTo);
+
+    localStorage.setItem(
+      "extractedKeywords",
+      JSON.stringify(extractedKeywords)
+    );
+
+    return extractedKeywords;
+  } catch (err) {
+    return rejectWithValue("Failed to extract keywords");
+  }
 });
 
-const keywordsSlice: Slice<
-  KeywordsState,
-  {},
-  "keywords",
-  "keywords",
-  SliceSelectors<KeywordsState>
-> = createSlice({
+export const keywordsSlice = createSlice({
   name: "keywords",
   initialState,
   reducers: {},
@@ -80,12 +66,11 @@ const keywordsSlice: Slice<
           state.keywords = action.payload;
         }
       )
-      .addCase(fetchKeywords.rejected, (state) => {
+      .addCase(fetchKeywords.rejected, (state, action) => {
         state.loading = false;
-        state.error = "Failed to fetch keywords";
+        state.error = action.payload as string;
       });
   },
 });
 
-export type { KeywordsState };
 export default keywordsSlice.reducer;
