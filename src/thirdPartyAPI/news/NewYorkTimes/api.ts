@@ -2,14 +2,17 @@ import {
   NewYorkTimesSearchResponse,
   NewYorkTimesSectionsResponse,
 } from "./types";
-import { requestApi, validateRecords } from "../../../utils";
+import {
+  deduplicateRecords,
+  requestApi,
+  validateRecords,
+} from "../../../utils";
 import {
   API_KEY,
   NEWYORKTIMES_SEARCH_V2,
   NEWYORKTIMES_SECTION_V3,
 } from "./constants";
 import {
-  extractNewYorkTimesAuthors,
   extractNewYorkTimesCategories,
   extractNewYorkTimesNews,
 } from "./services";
@@ -60,39 +63,26 @@ export const fetchNewYorkTimesCategories: () => Promise<{
   return { newYorkTimesCategories, newYorkTimesCategoriesMap };
 };
 
-export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
+export const updateNewYorkTimesAuthors = (authors: string[]): void => {
   let newYorkTimesAuthors: string[] = JSON.parse(
     localStorage.getItem("newYorkTimesAuthors") || "[]"
   ) as string[];
 
-  if (newYorkTimesAuthors.length === 0) {
-    try {
-      const params: Record<string, string> = {
-        q: "world+news",
-        "api-key": API_KEY,
-      };
-      const data = await requestApi<NewYorkTimesSearchResponse>(
-        NEWYORKTIMES_SEARCH_V2,
-        "GET",
-        params
-      );
+  newYorkTimesAuthors = validateRecords(
+    deduplicateRecords([...newYorkTimesAuthors, ...authors]),
+    (a: string) => !!a
+  );
 
-      const newYorkTimesAuthors = validateRecords(
-        Array.from(
-          new Set(extractNewYorkTimesAuthors(data?.response?.docs ?? []))
-        ),
-        (a: string) => !!a
-      );
+  localStorage.setItem(
+    "newYorkTimesAuthors",
+    JSON.stringify(newYorkTimesAuthors)
+  );
+};
 
-      localStorage.setItem(
-        "newYorkTimesAuthors",
-        JSON.stringify(newYorkTimesAuthors)
-      );
-    } catch (error) {
-      console.error("Error fetching New York Times Authors: ", error);
-      newYorkTimesAuthors = [];
-    }
-  }
+export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
+  let newYorkTimesAuthors: string[] = JSON.parse(
+    localStorage.getItem("newYorkTimesAuthors") || "[]"
+  ) as string[];
 
   return newYorkTimesAuthors;
 };
@@ -104,6 +94,8 @@ export const fetchNewYorkTimesNews = async (
   let newYorkTimesNews: NewsItem[] = JSON.parse(
     localStorage.getItem("newYorkTimesNews") || "[]"
   ) as NewsItem[];
+
+  let newYorkTimesAuthors: string[] = [];
 
   if (newYorkTimesNews.length === 0) {
     try {
@@ -122,10 +114,16 @@ export const fetchNewYorkTimesNews = async (
           "GET",
           params
         );
-        newYorkTimesNews.push(
-          ...extractNewYorkTimesNews(data?.response?.docs ?? [])
+
+        const newYorkTimes = extractNewYorkTimesNews(
+          data?.response?.docs ?? []
         );
+
+        newYorkTimesNews.push(...newYorkTimes["news"]);
+        newYorkTimesAuthors.push(...newYorkTimes["authors"]);
       }
+
+      updateNewYorkTimesAuthors(newYorkTimesAuthors);
 
       localStorage.setItem(
         "newYorkTimesNews",
