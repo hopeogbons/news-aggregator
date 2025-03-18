@@ -46,6 +46,13 @@ export interface TheGuardianArticle {
     thumbnail: string;
     body: string;
   };
+  tags: {
+    id: string;
+    type: string;
+    webTitle: string;
+    firstName: string;
+    lastName: string;
+  }[];
   isHosted: boolean;
   pillarId: string;
   pillarName: string;
