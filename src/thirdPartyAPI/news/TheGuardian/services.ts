@@ -1,4 +1,5 @@
 import { NewsItem } from "../../../redux/slices/newsSlice";
+import { extractAuthors } from "../../../utils";
 import {
   TheGuardianSection,
   TheGuardianArticle,
@@ -42,9 +43,11 @@ export const extractTheGuardianNews = (articles: TheGuardianArticle[]) => {
   } = { news: [], authors: [] };
 
   articles.forEach((item) => {
-    const authors: string[] = item?.tags?.map((tag) => tag.webTitle) ?? [];
-    const authorList =
-      authors.length > 0 ? authors : [item?.fields?.byline ?? "Unknown"];
+    const authors: string[] = [];
+    item?.tags?.map((tag: any) => {
+      authors.push(...extractAuthors(tag.webTitle));
+    });
+    authors.push(...extractAuthors(item?.fields?.byline));
 
     theGuardian.news.push({
       title: item?.webTitle ?? "",
@@ -53,11 +56,11 @@ export const extractTheGuardianNews = (articles: TheGuardianArticle[]) => {
       source: "The Guardian",
       publishedAt: item?.webPublicationDate ?? "",
       category: item?.sectionName ?? "General",
-      author: authorList.join(", "),
+      author: authors.length > 0 ? authors[0] : "Unknown",
       thumbnail: item?.fields?.thumbnail ?? "",
     });
 
-    theGuardian.authors.push(...authorList);
+    theGuardian.authors.push(...authors);
   });
 
   return theGuardian;

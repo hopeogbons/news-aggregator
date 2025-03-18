@@ -1,4 +1,5 @@
 import { NewsItem } from "../../../redux/slices/newsSlice";
+import { extractAuthors } from "../../../utils";
 import {
   NewYorkTimesArticle,
   NewYorkTimesArticleSearch,
@@ -54,15 +55,30 @@ const extractImageUrl = (
 
 export const extractNewYorkTimesNews = (
   articles: NewYorkTimesArticleSearch[]
-): NewsItem[] => {
-  return articles.map((article) => ({
-    title: article?.headline?.main ?? "",
-    description: article?.abstract ?? "",
-    url: article?.url ?? "#",
-    source: "New York Times",
-    publishedAt: article?.pub_date ?? "",
-    category: article?.section_name ?? "General",
-    author: article?.byline?.original ?? "Unknown",
-    thumbnail: extractImageUrl(article.multimedia),
-  }));
+) => {
+  const theNewYorkTimes: {
+    news: NewsItem[];
+    authors: string[];
+  } = { news: [], authors: [] };
+
+  articles.forEach((article) => {
+    const authors: string[] = extractAuthors(
+      article?.byline?.original ?? "Unknown"
+    );
+
+    theNewYorkTimes.news.push({
+      title: article?.headline?.main ?? "",
+      description: article?.abstract ?? "",
+      url: article?.web_url ?? "#",
+      source: "New York Times",
+      publishedAt: article?.pub_date ?? "",
+      category: article?.section_name ?? "General",
+      author: authors[0],
+      thumbnail: extractImageUrl(article.multimedia),
+    });
+
+    theNewYorkTimes.authors.push(...authors);
+  });
+
+  return theNewYorkTimes;
 };
