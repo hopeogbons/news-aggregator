@@ -12,7 +12,7 @@ export interface NewYorkTimesSectionsResponse {
 
 export interface NewYorkTimesArticleSearch {
   abstract: string;
-  url: string;
+  web_url: string;
   snippet: string;
   lead_paragraph: string;
   source: string;
