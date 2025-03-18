@@ -1,17 +1,18 @@
 import {
   TheGuardianSearchResponse,
   TheGuardianSectionsResponse,
-  TheGuardianTagsResponse,
 } from "./types";
-import { requestApi, validateRecords } from "../../../utils";
+import {
+  deduplicateRecords,
+  requestApi,
+  validateRecords,
+} from "../../../utils";
 import {
   API_KEY,
   THEGUARDIAN_SEARCH_V2,
   THEGUARDIAN_SECTIONS_V2,
-  THEGUARDIAN_TAGS_V2,
 } from "./constants";
 import {
-  extractTheGuardianAuthors,
   extractTheGuardianCategories,
   extractTheGuardianNews,
 } from "./services";
@@ -60,40 +61,26 @@ export const fetchTheGuardianCategories: () => Promise<{
   return { theGuardianCategories, theGuardianCategoriesMap };
 };
 
-export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
+export const updateTheGuardianAuthors = (authors: string[]): void => {
   let theGuardianAuthors: string[] = JSON.parse(
     localStorage.getItem("theGuardianAuthors") || "[]"
   ) as string[];
 
-  if (theGuardianAuthors.length === 0) {
-    try {
-      const params: Record<string, string> = {
-        type: "contributor",
-        "show-fields": "all",
-        "api-key": API_KEY,
-      };
-      const data = await requestApi<TheGuardianTagsResponse>(
-        THEGUARDIAN_TAGS_V2,
-        "GET",
-        params
-      );
+  theGuardianAuthors = validateRecords(
+    deduplicateRecords([...theGuardianAuthors, ...authors]),
+    (a: string) => !!a
+  );
 
-      const theGuardianAuthors = validateRecords(
-        Array.from(
-          new Set(extractTheGuardianAuthors(data?.response?.results ?? []))
-        ),
-        (a: string) => !!a
-      );
+  localStorage.setItem(
+    "theGuardianAuthors",
+    JSON.stringify(theGuardianAuthors)
+  );
+};
 
-      localStorage.setItem(
-        "theGuardianAuthors",
-        JSON.stringify(theGuardianAuthors)
-      );
-    } catch (error) {
-      console.error("Error fetching The Guardian Authors: ", error);
-      theGuardianAuthors = [];
-    }
-  }
+export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
+  let theGuardianAuthors: string[] = JSON.parse(
+    localStorage.getItem("theGuardianAuthors") || "[]"
+  ) as string[];
 
   return theGuardianAuthors;
 };
@@ -106,6 +93,10 @@ export const fetchTheGuardianNews = async (
     localStorage.getItem("theGuardianNews") || "[]"
   ) as NewsItem[];
 
+  let theGuardianAuthors: string[] = []; /*JSON.parse(
+    localStorage.getItem("theGuardianAuthors") || "[]"
+  ) as string[];*/
+
   if (theGuardianNews.length === 0) {
     try {
       const { newsPerPage, numberOfPages } = newsRetrieved;
@@ -113,9 +104,10 @@ export const fetchTheGuardianNews = async (
       for (let page = 1; page <= newsPerPage; page++) {
         const params: Record<string, string> = {
           q: queryParams,
-          "page-size": `${numberOfPages}`,
+          "show-tags": "contributor",
+          "show-fields": "headline,trailText,byline,thumbnail",
           page: `${page}`,
-          "show-fields": "all",
+          "page-size": `${numberOfPages}`,
           "api-key": API_KEY,
         };
         const data = await requestApi<TheGuardianSearchResponse>(
@@ -123,10 +115,16 @@ export const fetchTheGuardianNews = async (
           "GET",
           params
         );
-        theGuardianNews.push(
-          ...extractTheGuardianNews(data?.response?.results ?? [])
+
+        const theGuardian = extractTheGuardianNews(
+          data?.response?.results ?? []
         );
+
+        theGuardianNews.push(...theGuardian["news"]);
+        theGuardianAuthors.push(...theGuardian["authors"]);
       }
+
+      updateTheGuardianAuthors(theGuardianAuthors);
 
       localStorage.setItem("theGuardianNews", JSON.stringify(theGuardianNews));
     } catch (error) {
