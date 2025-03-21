@@ -1,45 +1,38 @@
 import { NewsItem } from "../../../redux/slices/newsSlice";
-import { extractAuthors } from "../../../utils";
+import { removeByPrefix } from "../../../utils";
 import { NewYorkTimesArticleSearch, NewYorkTimesSection } from "./types";
 
 export const extractNewYorkTimesAuthors = (
   articles: NewYorkTimesArticleSearch[]
 ): string[] => {
-  return articles.reduce<string[]>((authors, article) => {
-    if (article.byline?.original) {
-      const names = article.byline.original
-        .replace(/^by\s+/i, "")
-        .split(/\s*,\s*|\s+and\s+/);
+  if (!articles) return [];
 
-      names.forEach((name) => {
-        const trimmedName = name.trim();
-        if (trimmedName) authors.push(trimmedName);
-      });
-    }
-    return authors;
-  }, []);
+  return articles
+    .map((article) => article.byline?.original)
+    .filter((byline): byline is string => !!byline)
+    .map((byline) => byline.replace(/^by\s+/i, ""));
 };
 
 export const extractNewYorkTimesCategories = (
   sections: NewYorkTimesSection[]
-): Record<string, string> =>
-  sections.reduce(
+): Record<string, string> => {
+  if (!sections) return {};
+
+  return sections.reduce(
     (categories: Record<string, string>, section: NewYorkTimesSection) => {
-      const sectionId: string =
-        section?.section?.trim().toLowerCase() ?? "unknown";
-      const sectionName: string = section?.display_name ?? "Unknown";
+      const sectionId = section?.section?.trim().toLowerCase() || "unknown";
+      const sectionName = section?.display_name || "General";
       categories[sectionId] = sectionName;
       return categories;
     },
     {}
   );
+};
 
 const extractImageUrl = (
   multimedia: NewYorkTimesArticleSearch["multimedia"]
 ): string => {
-  if (!multimedia || multimedia.length === 0) {
-    return "";
-  }
+  if (!multimedia || multimedia.length === 0) return "";
 
   const image = multimedia.find(
     (media) => media.subtype === "thumbnail" || media.subtype === "wide"
@@ -51,29 +44,30 @@ const extractImageUrl = (
 
 export const extractNewYorkTimesNews = (
   articles: NewYorkTimesArticleSearch[]
-) => {
-  const theNewYorkTimes: {
-    news: NewsItem[];
-    authors: string[];
-  } = { news: [], authors: [] };
+): { news: NewsItem[]; authors: string[] } => {
+  if (!articles) return { news: [], authors: [] };
+
+  const theNewYorkTimes: { news: NewsItem[]; authors: string[] } = {
+    news: [],
+    authors: [],
+  };
 
   articles.forEach((article) => {
-    const authors: string[] = extractAuthors(
-      article?.byline?.original ?? "Unknown"
-    );
+    const author = removeByPrefix(article?.byline?.original || "Unknown");
+    const category = article?.section_name || "General";
 
     theNewYorkTimes.news.push({
-      title: article?.headline?.main ?? "",
-      description: article?.abstract ?? "",
-      url: article?.web_url ?? "#",
+      title: article?.headline?.main || "",
+      description: article?.abstract || "",
+      url: article?.web_url || "#",
       source: "New York Times",
-      publishedAt: article?.pub_date ?? "",
-      category: article?.section_name ?? "General",
-      author: authors[0],
+      publishedAt: article?.pub_date || "",
+      category,
+      author: author,
       thumbnail: extractImageUrl(article.multimedia),
     });
 
-    theNewYorkTimes.authors.push(...authors);
+    theNewYorkTimes.authors.push(author);
   });
 
   return theNewYorkTimes;

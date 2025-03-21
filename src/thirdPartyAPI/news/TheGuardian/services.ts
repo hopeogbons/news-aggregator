@@ -1,5 +1,5 @@
 import { NewsItem } from "../../../redux/slices/newsSlice";
-import { extractAuthors } from "../../../utils";
+import { removeByPrefix } from "../../../utils";
 import {
   TheGuardianSection,
   TheGuardianArticle,
@@ -10,14 +10,7 @@ export const extractTheGuardianAuthors = (tags: TheGuardianTag[]): string[] => {
   const authors: string[] = [];
 
   tags.forEach((tag: TheGuardianTag) => {
-    if (tag.type === "contributor" && tag.webTitle) {
-      tag.webTitle.split(/\s*,\s*|\s+and\s+/i).forEach((name: string) => {
-        const trimmedName = name.trim();
-        if (trimmedName && !authors.includes(trimmedName)) {
-          authors.push(trimmedName);
-        }
-      });
-    }
+    if (tag.type === "contributor" && tag.webTitle) authors.push(tag.webTitle);
   });
 
   return authors;
@@ -25,42 +18,45 @@ export const extractTheGuardianAuthors = (tags: TheGuardianTag[]): string[] => {
 
 export const extractTheGuardianCategories = (
   sections: TheGuardianSection[]
-): Record<string, string> =>
-  sections.reduce(
+): Record<string, string> => {
+  if (!sections) return {};
+
+  return sections.reduce(
     (categories: Record<string, string>, section: TheGuardianSection) => {
-      const sectionId: string = section?.id?.trim().toLowerCase() ?? "unknown";
-      const sectionCategory: string = section?.webTitle ?? "Unknown";
+      const sectionId = section?.id?.trim().toLowerCase() || "unknown";
+      const sectionCategory = section?.webTitle || "General";
       categories[sectionId] = sectionCategory;
       return categories;
     },
     {}
   );
+};
 
-export const extractTheGuardianNews = (articles: TheGuardianArticle[]) => {
-  const theGuardian: {
-    news: NewsItem[];
-    authors: string[];
-  } = { news: [], authors: [] };
+export const extractTheGuardianNews = (
+  articles: TheGuardianArticle[]
+): { news: NewsItem[]; authors: string[] } => {
+  if (!articles) return { news: [], authors: [] };
 
-  articles.forEach((item) => {
-    const authors: string[] = [];
-    item?.tags?.map((tag: any) => {
-      authors.push(...extractAuthors(tag.webTitle));
-    });
-    authors.push(...extractAuthors(item?.fields?.byline));
+  const theGuardian: { news: NewsItem[]; authors: string[] } = {
+    news: [],
+    authors: [],
+  };
+
+  articles.forEach((item: TheGuardianArticle) => {
+    const author: string = removeByPrefix(item?.fields?.byline || "Unknown");
 
     theGuardian.news.push({
-      title: item?.webTitle ?? "",
-      description: item?.fields?.trailText ?? "",
-      url: item?.webUrl ?? "#",
+      title: item?.webTitle || "",
+      description: item?.fields?.trailText || "",
+      url: item?.webUrl || "#",
       source: "The Guardian",
-      publishedAt: item?.webPublicationDate ?? "",
-      category: item?.sectionName ?? "General",
-      author: authors.length > 0 ? authors[0] : "Unknown",
-      thumbnail: item?.fields?.thumbnail ?? "",
+      publishedAt: item?.webPublicationDate || "",
+      category: item?.sectionName || "General",
+      author: author,
+      thumbnail: item?.fields?.thumbnail || "",
     });
 
-    theGuardian.authors.push(...authors);
+    theGuardian.authors.push(author);
   });
 
   return theGuardian;
