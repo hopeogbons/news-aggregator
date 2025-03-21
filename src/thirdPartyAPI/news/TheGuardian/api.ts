@@ -1,33 +1,35 @@
 import {
   TheGuardianSearchResponse,
   TheGuardianSectionsResponse,
+  TheGuardianTagsResponse,
 } from "./types";
 import {
   deduplicateRecords,
+  delay,
+  filterNewsArticles,
+  getFromCache,
   requestApi,
+  saveToCache,
   validateRecords,
 } from "../../../utils";
 import {
   API_KEY,
   THEGUARDIAN_SEARCH_V2,
   THEGUARDIAN_SECTIONS_V2,
+  THEGUARDIAN_TAGS_V2,
 } from "./constants";
 import {
+  extractTheGuardianAuthors,
   extractTheGuardianCategories,
   extractTheGuardianNews,
 } from "./services";
 import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
 
-export const fetchTheGuardianCategories: () => Promise<{
-  theGuardianCategories: string[];
-  theGuardianCategoriesMap: Record<string, string>;
-}> = async () => {
-  let theGuardianCategories: string[] = JSON.parse(
-    localStorage.getItem("theGuardianCategories") || "[]"
-  ) as string[];
-  let theGuardianCategoriesMap: Record<string, string> = JSON.parse(
-    localStorage.getItem("theGuardianCategoriesMap") || "[]"
-  ) as Record<string, string>;
+export const fetchTheGuardianCategories = async (): Promise<string[]> => {
+  let theGuardianCategories: string[] = getFromCache(
+    "theGuardianCategories",
+    []
+  );
 
   if (theGuardianCategories.length === 0) {
     try {
@@ -38,49 +40,54 @@ export const fetchTheGuardianCategories: () => Promise<{
         params
       );
 
-      theGuardianCategoriesMap = extractTheGuardianCategories(
-        data?.response?.results ?? []
+      const theGuardianCategoriesMap = extractTheGuardianCategories(
+        data?.response?.results || []
       );
       theGuardianCategories = Object.values(theGuardianCategoriesMap);
 
-      localStorage.setItem(
-        "theGuardianCategoriesMap",
-        JSON.stringify(theGuardianCategoriesMap)
-      );
-      localStorage.setItem(
-        "theGuardianCategories",
-        JSON.stringify(theGuardianCategories)
-      );
+      saveToCache("theGuardianCategories", theGuardianCategories);
     } catch (error) {
       console.error("Error fetching The Guardian Categories: ", error);
       theGuardianCategories = [];
-      theGuardianCategoriesMap = {};
     }
   }
 
-  return { theGuardianCategories, theGuardianCategoriesMap };
+  return theGuardianCategories;
 };
 
 export const updateTheGuardianAuthors = (authors: string[]): void => {
-  let theGuardianAuthors: string[] = JSON.parse(
-    localStorage.getItem("theGuardianAuthors") || "[]"
-  ) as string[];
-
-  theGuardianAuthors = validateRecords(
-    deduplicateRecords([...theGuardianAuthors, ...authors]),
+  const cachedAuthors = getFromCache("theGuardianAuthors", []);
+  const combinedAuthors = validateRecords(
+    deduplicateRecords([...cachedAuthors, ...authors]),
     (a: string) => !!a
   );
-
-  localStorage.setItem(
-    "theGuardianAuthors",
-    JSON.stringify(theGuardianAuthors)
-  );
+  saveToCache("theGuardianAuthors", combinedAuthors);
 };
 
 export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
-  let theGuardianAuthors: string[] = JSON.parse(
-    localStorage.getItem("theGuardianAuthors") || "[]"
-  ) as string[];
+  let theGuardianAuthors: string[] = getFromCache("theGuardianAuthors", []);
+
+  if (theGuardianAuthors.length === 0) {
+    try {
+      const params: Record<string, string> = {
+        type: "contributor",
+        "api-key": API_KEY,
+      };
+      const data: TheGuardianTagsResponse | null =
+        await requestApi<TheGuardianTagsResponse>(
+          THEGUARDIAN_TAGS_V2,
+          "GET",
+          params
+        );
+      theGuardianAuthors = extractTheGuardianAuthors(
+        data?.response?.results || []
+      );
+      saveToCache("theGuardianAuthors", theGuardianAuthors);
+    } catch (error) {
+      console.error("Error fetching The Guardian Authors: ", error);
+      theGuardianAuthors = [];
+    }
+  }
 
   return theGuardianAuthors;
 };
@@ -89,45 +96,44 @@ export const fetchTheGuardianNews = async (
   queryParams: string = "a",
   newsRetrieved: NewsRetrieved
 ): Promise<NewsItem[]> => {
-  let theGuardianNews: NewsItem[] = JSON.parse(
-    localStorage.getItem("theGuardianNews") || "[]"
-  ) as NewsItem[];
+  let theGuardianNews: NewsItem[] = [];
 
-  let theGuardianAuthors: string[] = [];
+  try {
+    const { newsPerPage, numberOfPages } = newsRetrieved;
+    let theGuardianAuthors: string[] = [];
 
-  if (theGuardianNews.length === 0) {
-    try {
-      const { newsPerPage, numberOfPages } = newsRetrieved;
+    for (let page = 1; page <= newsPerPage; page++) {
+      const params: Record<string, string> = {
+        q: queryParams,
+        "show-tags": "contributor",
+        "show-fields": "headline,trailText,byline,thumbnail",
+        page: `${page}`,
+        "page-size": `${numberOfPages}`,
+        "api-key": API_KEY,
+      };
+      await delay(1000);
+      const data = await requestApi<TheGuardianSearchResponse>(
+        THEGUARDIAN_SEARCH_V2,
+        "GET",
+        params
+      );
 
-      for (let page = 1; page <= newsPerPage; page++) {
-        const params: Record<string, string> = {
-          q: queryParams,
-          "show-tags": "contributor",
-          "show-fields": "headline,trailText,byline,thumbnail",
-          page: `${page}`,
-          "page-size": `${numberOfPages}`,
-          "api-key": API_KEY,
-        };
-        const data = await requestApi<TheGuardianSearchResponse>(
-          THEGUARDIAN_SEARCH_V2,
-          "GET",
-          params
-        );
+      const theGuardian = extractTheGuardianNews(data?.response?.results || []);
 
-        const theGuardian = extractTheGuardianNews(
-          data?.response?.results ?? []
-        );
-
-        theGuardianNews.push(...theGuardian["news"]);
-        theGuardianAuthors.push(...theGuardian["authors"]);
-      }
-
-      updateTheGuardianAuthors(theGuardianAuthors);
-
-      localStorage.setItem("theGuardianNews", JSON.stringify(theGuardianNews));
-    } catch (error) {
-      console.error("Failed to fetch news:", error);
+      theGuardianNews.push(...theGuardian.news);
+      theGuardianAuthors.push(...theGuardian.authors);
     }
+
+    updateTheGuardianAuthors(theGuardianAuthors);
+
+    theGuardianNews = filterNewsArticles(
+      theGuardianNews,
+      getFromCache("selectedCategories", []),
+      getFromCache("selectedAuthors", [])
+    );
+  } catch (error) {
+    console.error("Failed to fetch The Guardian news:", error);
+    theGuardianNews = [];
   }
 
   return theGuardianNews;

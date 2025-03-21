@@ -4,7 +4,11 @@ import {
 } from "./types";
 import {
   deduplicateRecords,
+  delay,
+  filterNewsArticles,
+  getFromCache,
   requestApi,
+  saveToCache,
   validateRecords,
 } from "../../../utils";
 import {
@@ -13,21 +17,17 @@ import {
   NEWYORKTIMES_SECTION_V3,
 } from "./constants";
 import {
+  extractNewYorkTimesAuthors,
   extractNewYorkTimesCategories,
   extractNewYorkTimesNews,
 } from "./services";
 import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
 
-export const fetchNewYorkTimesCategories: () => Promise<{
-  newYorkTimesCategories: string[];
-  newYorkTimesCategoriesMap: Record<string, string>;
-}> = async () => {
-  let newYorkTimesCategories: string[] = JSON.parse(
-    localStorage.getItem("newYorkTimesCategories") || "[]"
-  ) as string[];
-  let newYorkTimesCategoriesMap: Record<string, string> = JSON.parse(
-    localStorage.getItem("newYorkTimesCategoriesMap") || "[]"
-  ) as Record<string, string>;
+export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
+  let newYorkTimesCategories: string[] = getFromCache(
+    "newYorkTimesCategories",
+    []
+  );
 
   if (newYorkTimesCategories.length === 0) {
     try {
@@ -40,49 +40,62 @@ export const fetchNewYorkTimesCategories: () => Promise<{
         params
       );
 
-      newYorkTimesCategoriesMap = extractNewYorkTimesCategories(
-        data?.results ?? []
+      const newYorkTimesCategoriesMap = extractNewYorkTimesCategories(
+        data?.results || []
       );
       newYorkTimesCategories = Object.values(newYorkTimesCategoriesMap);
 
-      localStorage.setItem(
-        "newYorkTimesCategoriesMap",
-        JSON.stringify(newYorkTimesCategoriesMap)
-      );
-      localStorage.setItem(
-        "newYorkTimesCategories",
-        JSON.stringify(newYorkTimesCategories)
-      );
+      saveToCache("newYorkTimesCategories", newYorkTimesCategories);
     } catch (error) {
       console.error("Error fetching New York Times Categories: ", error);
       newYorkTimesCategories = [];
-      newYorkTimesCategoriesMap = {};
     }
   }
 
-  return { newYorkTimesCategories, newYorkTimesCategoriesMap };
+  return newYorkTimesCategories;
 };
 
 export const updateNewYorkTimesAuthors = (authors: string[]): void => {
-  let newYorkTimesAuthors: string[] = JSON.parse(
-    localStorage.getItem("newYorkTimesAuthors") || "[]"
-  ) as string[];
-
-  newYorkTimesAuthors = validateRecords(
-    deduplicateRecords([...newYorkTimesAuthors, ...authors]),
+  const existingAuthors = getFromCache("newYorkTimesAuthors", []);
+  const updatedAuthors = validateRecords(
+    deduplicateRecords([...existingAuthors, ...authors]),
     (a: string) => !!a
   );
 
-  localStorage.setItem(
-    "newYorkTimesAuthors",
-    JSON.stringify(newYorkTimesAuthors)
-  );
+  saveToCache("newYorkTimesAuthors", updatedAuthors);
 };
 
 export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
   let newYorkTimesAuthors: string[] = JSON.parse(
     localStorage.getItem("newYorkTimesAuthors") || "[]"
   ) as string[];
+
+  if (newYorkTimesAuthors.length === 0) {
+    try {
+      const params: Record<string, string> = {
+        q: "world news",
+        "api-key": API_KEY,
+      };
+      const data: NewYorkTimesSearchResponse | null =
+        await requestApi<NewYorkTimesSearchResponse>(
+          NEWYORKTIMES_SEARCH_V2,
+          "GET",
+          params
+        );
+
+      newYorkTimesAuthors = extractNewYorkTimesAuthors(
+        data?.response.docs || []
+      );
+
+      localStorage.setItem(
+        "newYorkTimesAuthors",
+        JSON.stringify(newYorkTimesAuthors)
+      );
+    } catch (error) {
+      console.error("Error fetching New York Times Authors: ", error);
+      newYorkTimesAuthors = [];
+    }
+  }
 
   return newYorkTimesAuthors;
 };
@@ -91,47 +104,43 @@ export const fetchNewYorkTimesNews = async (
   queryParams: string = "world+news",
   newsRetrieved: NewsRetrieved
 ): Promise<NewsItem[]> => {
-  let newYorkTimesNews: NewsItem[] = JSON.parse(
-    localStorage.getItem("newYorkTimesNews") || "[]"
-  ) as NewsItem[];
+  let newYorkTimesNews: NewsItem[] = [];
 
-  let newYorkTimesAuthors: string[] = [];
+  try {
+    const { newsPerPage, numberOfPages } = newsRetrieved;
+    let newYorkTimesAuthors: string[] = [];
 
-  if (newYorkTimesNews.length === 0) {
-    try {
-      const { newsPerPage, numberOfPages } = newsRetrieved;
-
-      for (let page = 1; page <= newsPerPage; page++) {
-        const params: Record<string, string> = {
-          q: queryParams,
-          "page-size": `${numberOfPages}`,
-          page: `${page - 1}`,
-          fl: "headline,byline,section_name,pub_date,web_url,snippet,multimedia",
-          "api-key": API_KEY,
-        };
-        const data = await requestApi<NewYorkTimesSearchResponse>(
-          NEWYORKTIMES_SEARCH_V2,
-          "GET",
-          params
-        );
-
-        const newYorkTimes = extractNewYorkTimesNews(
-          data?.response?.docs ?? []
-        );
-
-        newYorkTimesNews.push(...newYorkTimes["news"]);
-        newYorkTimesAuthors.push(...newYorkTimes["authors"]);
-      }
-
-      updateNewYorkTimesAuthors(newYorkTimesAuthors);
-
-      localStorage.setItem(
-        "newYorkTimesNews",
-        JSON.stringify(newYorkTimesNews)
+    for (let page = 1; page <= newsPerPage; page++) {
+      const params: Record<string, string> = {
+        q: queryParams,
+        "page-size": `${numberOfPages}`,
+        page: `${page - 1}`,
+        fl: "headline,byline,section_name,pub_date,web_url,snippet,multimedia",
+        "api-key": API_KEY,
+      };
+      await delay(1000);
+      const data = await requestApi<NewYorkTimesSearchResponse>(
+        NEWYORKTIMES_SEARCH_V2,
+        "GET",
+        params
       );
-    } catch (error) {
-      console.error("Failed to fetch news:", error);
+
+      const newYorkTimes = extractNewYorkTimesNews(data?.response?.docs || []);
+
+      newYorkTimesNews.push(...newYorkTimes.news);
+      newYorkTimesAuthors.push(...newYorkTimes.authors);
     }
+
+    updateNewYorkTimesAuthors(newYorkTimesAuthors);
+
+    newYorkTimesNews = filterNewsArticles(
+      newYorkTimesNews,
+      getFromCache("selectedCategories", []),
+      getFromCache("selectedAuthors", [])
+    );
+  } catch (error) {
+    console.error("Failed to fetch New York Times news:", error);
+    newYorkTimesNews = [];
   }
 
   return newYorkTimesNews;
