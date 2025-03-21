@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { formatDate } from "../../utils";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import QueryFilters from "./NewsFilters";
+import NewsFilters from "./NewsFilters";
 import { useFetchNews } from "../hooks/useFetchNews";
 
 const NewsFeed = () => {
@@ -67,7 +67,7 @@ const NewsFeed = () => {
             mb: 4,
           }}
         >
-          <QueryFilters />
+          <NewsFilters />
         </Box>
         {paginatedNews.map((news, index) => (
           <React.Fragment key={index}>
