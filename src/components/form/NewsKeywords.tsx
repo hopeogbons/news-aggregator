@@ -1,20 +1,20 @@
 import { Alert, Box, Container } from "@mui/material";
 import { useRenderSkeletons } from "../decorators/useRenderSkeletons";
-import { useFetchKeywords } from "../hooks/useFetchKeywords";
 import { useRenderChips } from "../decorators/useRenderChips";
 import { useEffect, useState } from "react";
+import { useFetchNews } from "../hooks/useFetchNews";
 
 const NewsKeywords = () => {
   const [keywordChips, setKeywordChips] = useState<string[]>([]);
-  const { keywords, loading, error } = useFetchKeywords();
+  const { extractedKeywords, loading, error } = useFetchNews();
   const renderSkeletons = useRenderSkeletons();
   const renderChips = useRenderChips(keywordChips);
 
   useEffect(() => {
-    if (!loading && !error && keywords.length > 0) {
-      setKeywordChips(keywords);
+    if (!loading && !error && extractedKeywords.length > 0) {
+      setKeywordChips(extractedKeywords);
     }
-  }, [keywords, error, loading]);
+  }, [extractedKeywords, error, loading]);
 
   if (loading) {
     return (
@@ -29,9 +29,22 @@ const NewsKeywords = () => {
       <Container maxWidth="md">
         <Alert
           severity="error"
-          sx={{ my: 3, display: "flex", alignItems: "center" }}
+          sx={{ my: 3, display: "flex", alignItems: "center", m: 0, p: 0 }}
         >
           Error: {error}
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!extractedKeywords || extractedKeywords.length === 0) {
+    return (
+      <Container maxWidth="md">
+        <Alert
+          severity="error"
+          sx={{ display: "flex", alignItems: "center", m: 0, p: 0 }}
+        >
+          Search for news.
         </Alert>
       </Container>
     );
