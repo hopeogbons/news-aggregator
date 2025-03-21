@@ -2,7 +2,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import authorsReducer from "./slices/authorsSlice";
 import categoriesReducer from "./slices/categoriesSlice";
-import keywordsReducer from "./slices/keywordsSlice";
 import newsReducer from "./slices/newsSlice";
 import sourcesReducer from "./slices/sourcesSlice";
 
@@ -10,7 +9,6 @@ const store = configureStore({
   reducer: {
     authors: authorsReducer,
     categories: categoriesReducer,
-    keywords: keywordsReducer,
     news: newsReducer,
     sources: sourcesReducer,
   },
