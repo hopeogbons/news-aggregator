@@ -24,16 +24,16 @@ export interface NewsItem {
   [key: string]: any;
 }
 
-export interface NewsRetrieved {
+export interface NewsPageDetails {
   newsPerPage: number;
   numberOfPages: number;
 }
-const newsRetrieved: NewsRetrieved = {
+const newsPageDetails: NewsPageDetails = {
   newsPerPage: 5,
   numberOfPages: 5,
 };
 
-const limitTo: number = 10;
+const topKeywordCount: number = 10;
 const cachedMergedNews = getFromCache("mergedNews", []);
 const cachedLastKeyword = getFromCache("lastKeyword", "");
 const cachedExtractedKeywords = getFromCache("extractedKeywords", []);
@@ -75,18 +75,21 @@ export const fetchNews = createAsyncThunk<
     const fetchPromises: Record<string, Promise<NewsItem[]>> = {};
 
     if (selectedSources.includes("newsAPI")) {
-      fetchPromises.newsAPI = fetchNewsApiNews(incomingKeyword, newsRetrieved);
+      fetchPromises.newsAPI = fetchNewsApiNews(
+        incomingKeyword,
+        newsPageDetails
+      );
     }
     if (selectedSources.includes("newYorkTimes")) {
       fetchPromises.newYorkTimes = fetchNewYorkTimesNews(
         incomingKeyword,
-        newsRetrieved
+        newsPageDetails
       );
     }
     if (selectedSources.includes("theGuardian")) {
       fetchPromises.theGuardian = fetchTheGuardianNews(
         incomingKeyword,
-        newsRetrieved
+        newsPageDetails
       );
     }
 
@@ -106,7 +109,7 @@ export const fetchNews = createAsyncThunk<
 
     const extractedKeywords: string[] = extractTopKeywordsFromTexts(
       mergedNews,
-      limitTo
+      topKeywordCount
     );
 
     saveToCache("mergedNews", mergedNews);
