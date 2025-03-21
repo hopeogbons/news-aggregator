@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import keyword_extractor from "keyword-extractor";
+import { NewsItem } from "../redux/slices/newsSlice";
 
 export const shuffleRecords = <T>(records: T[]): T[] => {
   // Fisher Yates' shuffle algorithm
@@ -44,16 +45,14 @@ export const sortRecords = <T>(
 };
 
 export const mergeRecords = async <T>(
-  selectedKeys: string[],
-  promiseMap: Record<string, T[]>
+  promiseMap: Record<string, Promise<T[]>>
 ): Promise<T[]> => {
-  const results = await Promise.allSettled(
-    selectedKeys.map((key) => promiseMap[key])
-  );
+  const promises = Object.values(promiseMap);
+  const results = await Promise.allSettled(promises);
 
   let merged: T[] = [];
   results.forEach((result) => {
-    if (result.status === "fulfilled" && result.value) {
+    if (result.status === "fulfilled") {
       merged = merged.concat(result.value);
     }
   });
@@ -82,31 +81,26 @@ export const requestApi = async <T>(
 };
 
 export const extractTopKeywordsFromTexts = (
-  texts: string[],
+  mergedNews: NewsItem[],
   limitTo: number
 ): string[] => {
-  const uniqueKeywords = new Set<string>();
+  let extracts: string[] = mergedNews
+    .map((item) => {
+      const { title, description } = item;
+      return keyword_extractor.extract(`${title} ${description}`, {
+        language: "en",
+        remove_digits: true,
+        return_changed_case: false,
+        remove_duplicates: true,
+        return_chained_words: true,
+      });
+    })
+    .flat();
 
-  for (const text of texts) {
-    const keywords = keyword_extractor.extract(text, {
-      language: "en",
-      remove_digits: true,
-      return_changed_case: false,
-      remove_duplicates: true,
-      return_chained_words: true,
-    });
-    for (const keyword of keywords) {
-      uniqueKeywords.add(keyword);
-    }
-  }
-
-  const filteredKeywords: string[] = Array.from(uniqueKeywords).filter(
-    (keyword) => /^[A-Z]/.test(keyword)
+  const keywords = shuffleRecords(
+    validateRecords(deduplicateRecords(extracts), (a) => /^[A-Z]/.test(a))
   );
-
-  const sortedKeywords = shuffleRecords(Array.from(filteredKeywords));
-
-  return sortedKeywords.slice(0, limitTo);
+  return keywords.slice(0, limitTo);
 };
 
 export const queryBuilder = (
@@ -147,8 +141,62 @@ export const formatDate = (dateString: string): string => {
   return `${day}${ordinalSuffix} ${month}, ${year}`;
 };
 
-export const extractAuthors = (strNames: string): string[] =>
-  strNames
-    .replace(/^by\s+/i, "")
-    .split(/\s*(?:,|and)\s*/gi)
-    .filter((name) => /^[A-Z]/.test(name));
+export const removeByPrefix = (strNames: string = ""): string =>
+  strNames.replace(/^by\s+/i, "");
+
+export const saveToCache = <T>(key: string, value: T) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
+export const getFromCache = <T>(key: string, defaultValue: T): T => {
+  const cachedData = localStorage.getItem(key);
+
+  if (!cachedData) return defaultValue;
+
+  try {
+    return JSON.parse(cachedData);
+  } catch (error) {
+    return cachedData as unknown as T;
+  }
+};
+
+export const filterNewsArticles = (
+  articles: NewsItem[],
+  categoryArray: string[],
+  authorArray: string[] = [],
+  sourceArray: string[] = [],
+  date: string = ""
+) => {
+  const news = articles.filter((article: NewsItem) => {
+    const categoryMatch =
+      !categoryArray ||
+      categoryArray.length === 0 ||
+      categoryArray.includes(article.category);
+
+    const authorMatch =
+      !authorArray ||
+      authorArray.length === 0 ||
+      authorArray.some((name) => article?.author.includes(name));
+
+    const sourceMatch =
+      !sourceArray ||
+      sourceArray.length === 0 ||
+      sourceArray.includes(article.source);
+
+    let dateMatch = true;
+    if (date) {
+      const searchDate = new Date(date).toISOString().split("T")[0];
+      const itemDate = new Date(article.publishedAt)
+        .toISOString()
+        .split("T")[0];
+      dateMatch = itemDate === searchDate;
+    }
+
+    return authorMatch && categoryMatch && sourceMatch && dateMatch;
+  });
+
+  return news;
+};
+
+export const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
