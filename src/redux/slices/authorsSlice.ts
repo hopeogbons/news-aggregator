@@ -1,11 +1,14 @@
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
+import {
+  getFromCache,
+  mergeRecords,
+  saveToCache,
+  sortRecords,
+} from "../../utils";
 import { fetchNewsApiAuthors } from "../../thirdPartyAPI/news/NewsAPI/api";
 import { fetchTheGuardianAuthors } from "../../thirdPartyAPI/news/TheGuardian/api";
 import { fetchNewYorkTimesAuthors } from "../../thirdPartyAPI/news/NewYorkTimes/api";
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "../store";
-import { mergeRecords, sortRecords } from "../../utils";
-
-const defaultAuthors: string[] = [];
 
 export interface AuthorsState {
   selectedAuthors: string[];
@@ -14,23 +17,14 @@ export interface AuthorsState {
   error: string | null;
 }
 
-const mergedAuthors: string[] = JSON.parse(
-  localStorage.getItem("mergedAuthors") || "[]"
-) as string[];
-const selectedAuthors: string[] = JSON.parse(
-  localStorage.getItem("selectedAuthors") || "[]"
-) as string[];
+const defaultAuthors: string[] = [];
+
 const initialState: AuthorsState = {
-  selectedAuthors:
-    selectedAuthors.length > 0 ? selectedAuthors : defaultAuthors,
-  mergedAuthors: mergedAuthors.length > 0 ? mergedAuthors : [],
+  selectedAuthors: getFromCache("selectedAuthors", defaultAuthors),
+  mergedAuthors: getFromCache("mergedAuthors", []),
   loading: false,
   error: null,
 };
-localStorage.setItem(
-  "selectedAuthors",
-  JSON.stringify(initialState.selectedAuthors)
-);
 
 export const fetchAuthors = createAsyncThunk<
   { mergedAuthors: string[] },
@@ -40,15 +34,20 @@ export const fetchAuthors = createAsyncThunk<
   try {
     const { sources } = getState();
     const selectedSources: string[] = sources.selectedSources || [];
+    const fetchPromises: Record<string, Promise<string[]>> = {};
 
-    const fetchPromises: Record<string, string[]> = {
-      newsAPI: await fetchNewsApiAuthors(),
-      theGuardian: await fetchTheGuardianAuthors(),
-      newYorkTimes: await fetchNewYorkTimesAuthors(),
-    };
+    if (selectedSources.includes("newsAPI")) {
+      fetchPromises.newsAPI = fetchNewsApiAuthors();
+    }
+    if (selectedSources.includes("newYorkTimes")) {
+      fetchPromises.newYorkTimes = fetchNewYorkTimesAuthors();
+    }
+    if (selectedSources.includes("theGuardian")) {
+      fetchPromises.theGuardian = fetchTheGuardianAuthors();
+    }
 
     const mergedAuthors: string[] = sortRecords(
-      Array.from(new Set(await mergeRecords(selectedSources, fetchPromises))),
+      Array.from(new Set(await mergeRecords(fetchPromises))),
       (a, b) => a.localeCompare(b)
     );
 
@@ -70,10 +69,7 @@ const authorsSlice = createSlice({
         typeof action.payload === "string"
           ? action.payload.split(",")
           : action.payload;
-      localStorage.setItem(
-        "selectedAuthors",
-        JSON.stringify(state.selectedAuthors)
-      );
+      saveToCache("selectedAuthors", state.selectedAuthors);
     },
   },
   extraReducers: (builder) => {

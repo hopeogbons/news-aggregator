@@ -1,8 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import {
+  extractTopKeywordsFromTexts,
+  getFromCache,
   mergeRecords,
-  queryBuilder,
+  saveToCache,
   sortRecords,
   validateRecords,
 } from "../../utils";
@@ -22,95 +24,110 @@ export interface NewsItem {
   [key: string]: any;
 }
 
-export interface NewsState {
-  mergedNews: NewsItem[];
-  loading: boolean;
-  error: string | null;
-  lastKeyword: string | null;
-}
-
 export interface NewsRetrieved {
   newsPerPage: number;
   numberOfPages: number;
 }
-
 const newsRetrieved: NewsRetrieved = {
   newsPerPage: 5,
   numberOfPages: 5,
 };
 
-const savedMergedNews: NewsItem[] = JSON.parse(
-  localStorage.getItem("mergedNews") || "[]"
-);
+const limitTo: number = 10;
+const cachedMergedNews = getFromCache("mergedNews", []);
+const cachedLastKeyword = getFromCache("lastKeyword", "");
+const cachedExtractedKeywords = getFromCache("extractedKeywords", []);
+
+export interface NewsState {
+  lastKeyword: string;
+  extractedKeywords: string[];
+  mergedNews: NewsItem[];
+  loading: boolean;
+  error: string | null;
+}
+
 const initialState: NewsState = {
-  mergedNews: savedMergedNews,
+  lastKeyword: cachedLastKeyword,
+  extractedKeywords: cachedExtractedKeywords,
+  mergedNews: cachedMergedNews,
   loading: false,
   error: null,
-  lastKeyword: null,
 };
 
 export const fetchNews = createAsyncThunk<
-  { mergedNews: NewsItem[]; keyword: string },
+  { mergedNews: NewsItem[]; keyword: string; extractedKeywords: string[] },
   string,
   { state: RootState }
 >("news/fetch", async (keyword, { getState, rejectWithValue }) => {
   try {
-    const sanitizedKeyword = keyword.toLowerCase().trim();
-    const cachedLastKeyword: string = localStorage.getItem(
-      "lastKeyword"
-    ) as string;
-    let mergedNews: NewsItem[] = JSON.parse(
-      localStorage.getItem("mergedNews") || "[]"
-    ) as NewsItem[];
+    const incomingKeyword = keyword.toLowerCase().trim();
 
-    if (sanitizedKeyword !== cachedLastKeyword && mergedNews.length > 0) {
-      return { mergedNews, keyword: sanitizedKeyword };
+    if (incomingKeyword === cachedLastKeyword) {
+      return {
+        mergedNews: cachedMergedNews,
+        keyword: cachedLastKeyword,
+        extractedKeywords: cachedExtractedKeywords,
+      };
     }
 
-    const { sources, authors, categories } = getState();
-    const selectedAuthors: string[] = authors.mergedAuthors;
-    const selectedCategories: string[] = categories.mergedCategories;
+    const { sources } = getState();
     const selectedSources: string[] = sources.selectedSources;
+    const fetchPromises: Record<string, Promise<NewsItem[]>> = {};
 
-    const queryParams: string = queryBuilder(
-      sanitizedKeyword,
-      selectedCategories,
-      selectedAuthors
-    );
+    if (selectedSources.includes("newsAPI")) {
+      fetchPromises.newsAPI = fetchNewsApiNews(incomingKeyword, newsRetrieved);
+    }
+    if (selectedSources.includes("newYorkTimes")) {
+      fetchPromises.newYorkTimes = fetchNewYorkTimesNews(
+        incomingKeyword,
+        newsRetrieved
+      );
+    }
+    if (selectedSources.includes("theGuardian")) {
+      fetchPromises.theGuardian = fetchTheGuardianNews(
+        incomingKeyword,
+        newsRetrieved
+      );
+    }
 
-    const fetchPromises: Record<string, NewsItem[]> = {
-      newsAPI: await fetchNewsApiNews(queryParams, newsRetrieved),
-      theGuardian: await fetchTheGuardianNews(queryParams, newsRetrieved),
-      newYorkTimes: await fetchNewYorkTimesNews(queryParams, newsRetrieved),
-    };
-
-    mergedNews = sortRecords(
+    const mergedNews = sortRecords(
       validateRecords(
-        Array.from(new Set(await mergeRecords(selectedSources, fetchPromises))),
+        await mergeRecords(fetchPromises),
         (a: NewsItem) => !!a.thumbnail?.trim()
       ),
       (a: NewsItem, b: NewsItem) => {
         const fallbackDate = "1700-07-18T07:32:09+00:00"; // to deprioritize and push down
         return (
-          new Date(b.publishedAt ?? fallbackDate).getTime() -
-          new Date(a.publishedAt ?? fallbackDate).getTime()
+          new Date(b.publishedAt || fallbackDate).getTime() -
+          new Date(a.publishedAt || fallbackDate).getTime()
         );
       }
     );
 
-    localStorage.setItem("mergedNews", JSON.stringify(mergedNews));
-    localStorage.setItem("lastKeyword", sanitizedKeyword);
+    const extractedKeywords: string[] = extractTopKeywordsFromTexts(
+      mergedNews,
+      limitTo
+    );
 
-    return { mergedNews, keyword: sanitizedKeyword };
+    saveToCache("mergedNews", mergedNews);
+    saveToCache("lastKeyword", incomingKeyword);
+    saveToCache("extractedKeywords", extractedKeywords);
+
+    return { mergedNews, keyword: incomingKeyword, extractedKeywords };
   } catch (error) {
-    return rejectWithValue("Failed to fetch news");
+    return rejectWithValue("Failed to fetch combined news");
   }
 });
 
 const newsSlice = createSlice({
   name: "news",
   initialState,
-  reducers: {},
+  reducers: {
+    search: (state, action: PayloadAction<string>) => {
+      state.lastKeyword = action.payload;
+      saveToCache("lastKeyword", state.lastKeyword);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNews.pending, (state) => {
@@ -121,11 +138,16 @@ const newsSlice = createSlice({
         fetchNews.fulfilled,
         (
           state,
-          action: PayloadAction<{ mergedNews: NewsItem[]; keyword: string }>
+          action: PayloadAction<{
+            mergedNews: NewsItem[];
+            keyword: string;
+            extractedKeywords: string[];
+          }>
         ) => {
           state.loading = false;
           state.mergedNews = action.payload.mergedNews;
           state.lastKeyword = action.payload.keyword;
+          state.extractedKeywords = action.payload.extractedKeywords;
         }
       )
       .addCase(fetchNews.rejected, (state, action) => {
@@ -135,4 +157,5 @@ const newsSlice = createSlice({
   },
 });
 
+export const { search } = newsSlice.actions;
 export default newsSlice.reducer;
