@@ -30,6 +30,14 @@ export interface TheGuardianTagsResponse {
   };
 }
 
+export interface TheGuardianArticleTag {
+  id: string;
+  type: string;
+  webTitle: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface TheGuardianArticle {
   id: string;
   type: string;
@@ -46,13 +54,7 @@ export interface TheGuardianArticle {
     thumbnail: string;
     body: string;
   };
-  tags: {
-    id: string;
-    type: string;
-    webTitle: string;
-    firstName: string;
-    lastName: string;
-  }[];
+  tags: TheGuardianArticleTag[];
   isHosted: boolean;
   pillarId: string;
   pillarName: string;
