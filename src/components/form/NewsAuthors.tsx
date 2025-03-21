@@ -8,7 +8,6 @@ import { updateSelectedAuthors } from "../../redux/slices/authorsSlice";
 
 const NewsAuthors = () => {
   const dispatch = useAppDispatch();
-  const [selectedData, setSelectedData] = useState<string[]>([]);
   const { mergedAuthors, loading, error } = useFetchAuthors();
   const selectedSources = useAppSelector(
     (state) => state.sources.selectedSources
@@ -16,25 +15,26 @@ const NewsAuthors = () => {
   const selectedAuthors = useAppSelector(
     (state) => state.authors.selectedAuthors
   );
+  const [selectedData, setSelectedData] = useState<string[]>(selectedAuthors);
   const renderSkeletons = useRenderSkeletons();
 
   useEffect(() => {
-    if (!loading && !error && mergedAuthors.length > 0) {
-      setSelectedData(selectedAuthors);
+    setSelectedData(selectedAuthors);
+  }, [selectedAuthors]);
+
+  useEffect(() => {
+    try {
+      dispatch(updateSelectedAuthors(selectedData));
+    } catch (error) {
+      console.error("Failed to select authors: ", error);
     }
-  }, [mergedAuthors, error, loading]);
+  }, [selectedData, dispatch]);
 
   useEffect(() => {
     if (selectedSources.length === 0) {
       setSelectedData([]);
     }
   }, [selectedSources]);
-
-  useEffect(() => {
-    if (selectedData.length > 0) {
-      dispatch(updateSelectedAuthors(selectedData));
-    }
-  }, [selectedData]);
 
   if (loading) {
     return (
@@ -54,8 +54,24 @@ const NewsAuthors = () => {
   if (error) {
     return (
       <Container maxWidth="md">
-        <Alert severity="error" sx={{ display: "flex", alignItems: "center" }}>
+        <Alert
+          severity="error"
+          sx={{ display: "flex", alignItems: "center", m: 0, p: 0 }}
+        >
           Error: {error}
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!mergedAuthors || mergedAuthors.length === 0) {
+    return (
+      <Container maxWidth="md">
+        <Alert
+          severity="error"
+          sx={{ display: "flex", alignItems: "center", m: 0, p: 0 }}
+        >
+          Selecte a news source.
         </Alert>
       </Container>
     );

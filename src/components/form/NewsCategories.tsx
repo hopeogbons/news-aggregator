@@ -8,7 +8,6 @@ import { updateSelectedCategories } from "../../redux/slices/categoriesSlice";
 
 const NewsCategories = () => {
   const dispatch = useAppDispatch();
-  const [selectedData, setSelectedData] = useState<string[]>([]);
   const { mergedCategories, loading, error } = useFetchCategories();
   const selectedSources = useAppSelector(
     (state) => state.sources.selectedSources
@@ -16,25 +15,27 @@ const NewsCategories = () => {
   const selectedCategories = useAppSelector(
     (state) => state.categories.selectedCategories
   );
+  const [selectedData, setSelectedData] =
+    useState<string[]>(selectedCategories);
   const renderSkeletons = useRenderSkeletons();
 
   useEffect(() => {
-    if (!loading && !error && mergedCategories.length > 0) {
-      setSelectedData(selectedCategories);
+    setSelectedData(selectedCategories);
+  }, [selectedCategories]);
+
+  useEffect(() => {
+    try {
+      dispatch(updateSelectedCategories(selectedData));
+    } catch (error) {
+      console.error("Failed to select categories: ", error);
     }
-  }, [mergedCategories, error, loading]);
+  }, [selectedData, dispatch]);
 
   useEffect(() => {
     if (selectedSources.length === 0) {
       setSelectedData([]);
     }
   }, [selectedSources]);
-
-  useEffect(() => {
-    if (selectedData.length > 0) {
-      dispatch(updateSelectedCategories(selectedData));
-    }
-  }, [selectedData]);
 
   if (loading) {
     return (
@@ -54,8 +55,24 @@ const NewsCategories = () => {
   if (error) {
     return (
       <Container maxWidth="md">
-        <Alert severity="error" sx={{ display: "flex", alignItems: "center" }}>
+        <Alert
+          severity="error"
+          sx={{ display: "flex", alignItems: "center", m: 0, p: 0 }}
+        >
           Error: {error}
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!mergedCategories || mergedCategories.length === 0) {
+    return (
+      <Container maxWidth="md">
+        <Alert
+          severity="error"
+          sx={{ display: "flex", alignItems: "center", m: 0, p: 0 }}
+        >
+          Selecte a news source.
         </Alert>
       </Container>
     );
