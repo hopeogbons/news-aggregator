@@ -4,13 +4,18 @@ import { fetchNews } from "../../redux/slices/newsSlice";
 
 export const useFetchNews = () => {
   const dispatch = useAppDispatch();
-  const { mergedNews, loading, error } = useAppSelector((state) => state.news);
+  const { lastKeyword, extractedKeywords, mergedNews, error, loading } =
+    useAppSelector((state) => state.news);
 
   useEffect(() => {
-    const searchPhrase = "world+news";
-    encodeURIComponent(`"${searchPhrase}"`);
-    dispatch(fetchNews(searchPhrase));
-  }, [dispatch]);
+    if (lastKeyword !== "") {
+      try {
+        dispatch(fetchNews(lastKeyword));
+      } catch (error) {
+        console.error("Failed to fetch news: ", error);
+      }
+    }
+  }, [dispatch, lastKeyword]);
 
-  return { mergedNews, loading, error };
+  return { lastKeyword, extractedKeywords, mergedNews, loading, error };
 };
