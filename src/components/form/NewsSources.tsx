@@ -2,8 +2,6 @@ import { FC } from "react";
 import { FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../redux/store";
 import { defaultSources, toggleSource } from "../../redux/slices/sourcesSlice";
-import { fetchCategories } from "../../redux/slices/categoriesSlice";
-import { fetchAuthors } from "../../redux/slices/authorsSlice";
 
 const NewsSources: FC = () => {
   const dispatch = useAppDispatch();
@@ -11,10 +9,12 @@ const NewsSources: FC = () => {
     (state) => state.sources.selectedSources
   );
 
-  const handleToggle = async (source: string) => {
-    dispatch(toggleSource(source));
-    await dispatch(fetchCategories());
-    await dispatch(fetchAuthors());
+  const handleToggle = (source: string) => {
+    try {
+      dispatch(toggleSource(source));
+    } catch (error) {
+      console.error("Failed to toggle source: ", error);
+    }
   };
 
   return (

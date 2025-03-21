@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ChangeEvent, useState } from "react";
 import {
   Typography,
   Pagination,
@@ -9,10 +9,10 @@ import {
   Divider,
   Avatar,
 } from "@mui/material";
-import { useFetchNews } from "../hooks/useFetchNews";
 import { formatDate } from "../../utils";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import QueryFilters from "./NewsFilters";
+import { useFetchNews } from "../hooks/useFetchNews";
 
 const NewsFeed = () => {
   const { mergedNews, error, loading } = useFetchNews();
@@ -23,10 +23,7 @@ const NewsFeed = () => {
   const endIndex = startIndex + itemsPerPage;
   const paginatedNews = mergedNews.slice(startIndex, endIndex);
 
-  const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number
-  ) => {
+  const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
 
@@ -51,13 +48,7 @@ const NewsFeed = () => {
   if (!mergedNews || mergedNews.length === 0) {
     return (
       <Container maxWidth="md">
-        <Alert
-          severity="error"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+        <Alert severity="error" sx={{ display: "flex", alignItems: "center" }}>
           No news available.
         </Alert>
       </Container>
@@ -97,11 +88,12 @@ const NewsFeed = () => {
                   <Avatar
                     src={news.thumbnail}
                     variant="rounded"
-                    color="background.default"
                     sx={{
                       width: { xs: 120, md: 150 },
                       height: { xs: 90, md: 120 },
                       objectFit: "cover",
+                      color: "primary.main",
+                      backgroundColor: "background.default",
                       boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.7)",
                       borderRadius: 2,
                       transform:
