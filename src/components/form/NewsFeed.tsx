@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
   Typography,
   Pagination,
@@ -13,15 +13,55 @@ import { formatDate } from "../../utils";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import NewsFilters from "./NewsFilters";
 import { useFetchNews } from "../hooks/useFetchNews";
+import { filterNewsArticles } from "../../utils";
+import dayjs from "dayjs";
 
 const NewsFeed = () => {
   const { mergedNews, error, loading } = useFetchNews();
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
 
+  type FilterState = {
+    date: dayjs.Dayjs | null;
+    category: string;
+    source: string;
+  };
+
+  const [filters, setFilters] = useState<FilterState>({
+    date: null,
+    category: "",
+    source: "",
+  });
+
+  const handleFilterChange = (newsFilter: Partial<FilterState>) => {
+    setFilters((prev) => {
+      const updated = { ...prev, ...newsFilter };
+      const hasChanged = Object.keys(updated).some(
+        (key) =>
+          updated[key as keyof FilterState] !== prev[key as keyof FilterState]
+      );
+      return hasChanged ? updated : prev;
+    });
+  };
+
+  const filteredMergedNews = useMemo(() => {
+    return filterNewsArticles(
+      mergedNews,
+      filters.category ? [filters.category] : [],
+      [],
+      filters.source ? [filters.source] : [],
+      filters.date ? filters.date.format("YYYY-MM-DD") : null
+    );
+  }, [mergedNews, filters]);
+
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedNews = mergedNews.slice(startIndex, endIndex);
+  const paginatedNews = filteredMergedNews.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    const pageCount = Math.ceil(filteredMergedNews.length / itemsPerPage);
+    if (page > pageCount) setPage(Math.max(1, pageCount));
+  }, [filteredMergedNews, page, itemsPerPage]);
 
   const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -67,10 +107,10 @@ const NewsFeed = () => {
             mb: 4,
           }}
         >
-          <NewsFilters />
+          <NewsFilters filters={filters} onFilterChange={handleFilterChange} />
         </Box>
         {paginatedNews.map((news, index) => (
-          <React.Fragment key={index}>
+          <Box key={index}>
             <a
               href={news.url}
               target="_blank"
@@ -179,7 +219,7 @@ const NewsFeed = () => {
             {index < paginatedNews.length - 1 && (
               <Divider variant="middle" sx={{ my: { xs: 2, md: 3.5 } }} />
             )}
-          </React.Fragment>
+          </Box>
         ))}
       </Box>
 
@@ -188,7 +228,7 @@ const NewsFeed = () => {
           variant="text"
           color="primary"
           shape="rounded"
-          count={Math.ceil(mergedNews.length / itemsPerPage)}
+          count={Math.ceil(filteredMergedNews.length / itemsPerPage)}
           page={page}
           onChange={handlePageChange}
           boundaryCount={1}

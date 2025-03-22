@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import keyword_extractor from "keyword-extractor";
 import { NewsItem } from "../redux/slices/newsSlice";
+import dayjs from "dayjs";
 
 export const shuffleRecords = <T>(records: T[]): T[] => {
   // Fisher Yates' shuffle algorithm
@@ -165,34 +166,28 @@ export const filterNewsArticles = (
   categoryArray: string[],
   authorArray: string[] = [],
   sourceArray: string[] = [],
-  date: string = ""
+  date: string | null = null
 ) => {
   const news = articles.filter((article: NewsItem) => {
     const categoryMatch =
-      !categoryArray ||
-      categoryArray.length === 0 ||
-      categoryArray.includes(article.category);
+      !categoryArray?.length || categoryArray.includes(article.category);
 
     const authorMatch =
-      !authorArray ||
-      authorArray.length === 0 ||
-      authorArray.some((name) => article?.author.includes(name));
+      !authorArray?.length ||
+      authorArray.some((name) => article?.author?.includes(name));
 
     const sourceMatch =
-      !sourceArray ||
-      sourceArray.length === 0 ||
-      sourceArray.includes(article.source);
+      !sourceArray?.length || sourceArray.includes(article.source);
 
     let dateMatch = true;
     if (date) {
-      const searchDate = new Date(date).toISOString().split("T")[0];
-      const itemDate = new Date(article.publishedAt)
-        .toISOString()
-        .split("T")[0];
-      dateMatch = itemDate === searchDate;
+      const searchDate = dayjs(date);
+      const articleDate = dayjs(article.publishedAt);
+
+      dateMatch = articleDate.isSame(searchDate, "day");
     }
 
-    return authorMatch && categoryMatch && sourceMatch && dateMatch;
+    return categoryMatch && authorMatch && sourceMatch && dateMatch;
   });
 
   return news;
