@@ -61,7 +61,7 @@ const NewsFeed = () => {
         <Box
           sx={{
             display: "flex",
-            flexDirection: "row",
+            flexDirection: { xs: "column", sm: "row" },
             alignContent: "space-between",
             gap: 2,
             mb: 4,

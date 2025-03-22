@@ -43,8 +43,8 @@ const KeywordsSearch = () => {
         p: "2px 4px",
         display: "flex",
         alignItems: "center",
-        width: "10em",
-        mt: { xs: 2, md: 0 },
+        width: { xs: "10em", sm: "12em", md: "15em" },
+        mt: { xs: 2, sm: 0 },
       }}
     >
       <InputBase

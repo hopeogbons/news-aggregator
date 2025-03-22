@@ -22,7 +22,7 @@ const HomeLayout: FC<HomeLayoutProps> = ({ children }) => (
         maxWidth="xl"
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", md: "row" },
+          flexDirection: { xs: "column", sm: "row" },
           alignItems: "center",
           justifyContent: "space-between",
           py: 6,
@@ -46,7 +46,7 @@ const HomeLayout: FC<HomeLayoutProps> = ({ children }) => (
             <NewspaperIcon
               sx={{
                 mr: 2,
-                fontSize: { xs: 30, md: 65 },
+                fontSize: { xs: 30, sm: 45, md: 65 },
               }}
             />
             News updates
