@@ -1,54 +1,148 @@
-# React + TypeScript + Vite
+# 📰 News Aggregator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, fast, and responsive news aggregation app built with React, Redux, and Material UI. It fetches and displays news content from various sources, extracts keywords, and presents them in a clean and intuitive interface.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- 🔍 Keyword extraction using `keyword-extractor`
+- 📅 Date-based filtering with `@mui/x-date-pickers`
+- ⚛️ State management via Redux Toolkit
+- 💅 Styled with Material UI and Emotion
+- 📡 Fetches data using Axios
+- 🌐 Routing with React Router
+- ⚙️ Built with Vite for lightning-fast performance
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🛠️ Tech Stack
+
+| Category         | Library/Tool                            |
+| ---------------- | --------------------------------------- |
+| Frontend         | React 19, React DOM                     |
+| Styling          | Material UI, Emotion, styled-components |
+| State Management | Redux Toolkit, React Redux              |
+| HTTP Requests    | Axios                                   |
+| Routing          | React Router DOM                        |
+| Date Handling    | Day.js, MUI Date Pickers                |
+| Keyword Parsing  | keyword-extractor                       |
+| Dev Tools        | TypeScript, ESLint, Vite                |
+
+---
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Node.js >= 18
+- npm or yarn
+
+### Development Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/hopeogbons/news-aggregator.git
+cd news-aggregator
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Build for Production
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run build
 ```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+### Lint the Code
+
+```bash
+npm run lint
+```
+
+---
+
+## 🐳 Docker Support
+
+A production-ready Docker image is available via Docker Hub.
+
+### Pull the Image
+
+```bash
+docker pull hopeogbons/news-aggregator
+```
+
+### Run the Container
+
+```bash
+docker run -p 5173:80 hopeogbons/news-aggregator
+```
+
+> **_Make sure port 5173 is available or update it as needed_**
+
+---
+
+## 📁 Project Structure (Overview)
+
+```
+news-aggregator/
+├── public/
+├── src/
+│ ├── assests/
+│ ├── components/
+│ │ ├── decorators/
+│ │ ├── form
+│ │ ├── hooks
+│ │ ├── layouts
+│ │ └── pages
+│ ├── redux/
+│ ├── styles/
+│ ├── thirdPartyAPI/news/
+│ ├── utils/
+│ ├── App.tsx
+│ └── main.tsx
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+├── eslint.config.js
+├── index.html
+├── nginx.conf
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+```
+
+---
+
+## ✅ Production Ready
+
+- 🔐 Uses modular architecture and modern best practices
+- 🧪 ESLint integration for consistent code quality
+- 📦 Lightweight, fast, and scalable
+- 🐳 Dockerized for easy deployment
+
+---
+
+## 📄 License
+
+MIT License — feel free to use, modify, and distribute.
+
+---
+
+## 🙌 Contributing
+
+Pull requests are welcome! If you find any bugs or have feature suggestions, feel free to open an issue or contribute directly.
