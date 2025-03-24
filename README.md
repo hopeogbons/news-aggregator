@@ -79,13 +79,13 @@ A production-ready Docker image is available via Docker Hub.
 ### Pull the Image
 
 ```bash
-docker pull hopeogbons/news-aggregator
+docker pull hopeogbons/news-aggregator:1.0
 ```
 
 ### Run the Container
 
 ```bash
-docker run -p 5173:80 hopeogbons/news-aggregator
+docker run -p 5173:80 hopeogbons/news-aggregator:1.0
 ```
 
 > **_Make sure port 5173 is available or update it as needed_**
