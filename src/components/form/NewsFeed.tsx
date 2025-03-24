@@ -65,6 +65,7 @@ const NewsFeed = () => {
 
   const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
     setPage(value);
+    console.log(event);
   };
 
   if (loading) {

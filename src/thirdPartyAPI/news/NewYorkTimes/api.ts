@@ -21,7 +21,7 @@ import {
   extractNewYorkTimesCategories,
   extractNewYorkTimesNews,
 } from "./services";
-import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
+import { NewsItem, NewsPageDetails } from "../../../redux/slices/newsSlice";
 
 export const fetchNewYorkTimesCategories = async (): Promise<string[]> => {
   let newYorkTimesCategories: string[] = getFromCache(
@@ -102,12 +102,12 @@ export const fetchNewYorkTimesAuthors = async (): Promise<string[]> => {
 
 export const fetchNewYorkTimesNews = async (
   queryParams: string = "world+news",
-  newsRetrieved: NewsRetrieved
+  newsPageDetails: NewsPageDetails
 ): Promise<NewsItem[]> => {
   let newYorkTimesNews: NewsItem[] = [];
 
   try {
-    const { newsPerPage, numberOfPages } = newsRetrieved;
+    const { newsPerPage, numberOfPages } = newsPageDetails;
     let newYorkTimesAuthors: string[] = [];
 
     for (let page = 1; page <= newsPerPage; page++) {

@@ -18,7 +18,7 @@ import {
   extractNewsApiCategories,
   extractNewsApiNews,
 } from "./services";
-import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
+import { NewsItem, NewsPageDetails } from "../../../redux/slices/newsSlice";
 
 export const fetchNewsApiCategories = async (): Promise<string[]> => {
   let newsApiCategories: string[] = getFromCache("newsApiCategories", []);
@@ -91,7 +91,7 @@ export const fetchNewsApiAuthors = async (): Promise<string[]> => {
 
 export const fetchNewsApiNews = async (
   queryParams: string = "a",
-  newsRetrieved: NewsRetrieved
+  newsPageDetails: NewsPageDetails
 ): Promise<NewsItem[]> => {
   let newsApiNews: NewsItem[] = [];
 
@@ -102,7 +102,7 @@ export const fetchNewsApiNews = async (
     );
     let newsApiAuthors: string[] = [];
 
-    const { newsPerPage, numberOfPages } = newsRetrieved;
+    const { newsPerPage, numberOfPages } = newsPageDetails;
     for (let page = 1; page <= newsPerPage; page++) {
       const params: Record<string, string> = {
         q: queryParams,

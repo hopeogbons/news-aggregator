@@ -23,7 +23,7 @@ import {
   extractTheGuardianCategories,
   extractTheGuardianNews,
 } from "./services";
-import { NewsItem, NewsRetrieved } from "../../../redux/slices/newsSlice";
+import { NewsItem, NewsPageDetails } from "../../../redux/slices/newsSlice";
 
 export const fetchTheGuardianCategories = async (): Promise<string[]> => {
   let theGuardianCategories: string[] = getFromCache(
@@ -94,12 +94,12 @@ export const fetchTheGuardianAuthors = async (): Promise<string[]> => {
 
 export const fetchTheGuardianNews = async (
   queryParams: string = "a",
-  newsRetrieved: NewsRetrieved
+  newsPageDetails: NewsPageDetails
 ): Promise<NewsItem[]> => {
   let theGuardianNews: NewsItem[] = [];
 
   try {
-    const { newsPerPage, numberOfPages } = newsRetrieved;
+    const { newsPerPage, numberOfPages } = newsPageDetails;
     let theGuardianAuthors: string[] = [];
 
     for (let page = 1; page <= newsPerPage; page++) {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Chip, Tooltip } from "@mui/material";
+import { Chip, Tooltip } from "@mui/material";
 
 const useRenderChips = (keywords: string[]) => {
   return useMemo(
