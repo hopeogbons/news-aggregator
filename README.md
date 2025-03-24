@@ -2,6 +2,8 @@
 
 A modern, fast, and responsive news aggregation app built with React, Redux, and Material UI. It fetches and displays news content from various sources, extracts keywords, and presents them in a clean and intuitive interface.
 
+![Screenshot 2025-03-13 at 23 44 58](https://github.com/user-attachments/assets/e3ea655d-caeb-407e-9f77-6c4bb0ab10ef)
+
 ---
 
 ## 🚀 Features
