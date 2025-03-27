@@ -15,6 +15,7 @@ import NewsFilters from "./NewsFilters";
 import { useFetchNews } from "../hooks/useFetchNews";
 import { filterNewsArticles } from "../../utils";
 import dayjs from "dayjs";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NewsFeed = () => {
   const { mergedNews, error, loading } = useFetchNews();
