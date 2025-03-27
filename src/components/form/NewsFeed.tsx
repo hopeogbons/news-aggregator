@@ -50,11 +50,31 @@ const NewsFeed = () => {
   const handleFilterChange = (newsFilter: Partial<FilterState>) => {
     setFilters((prev) => {
       const updated = { ...prev, ...newsFilter };
-      const hasChanged = Object.keys(updated).some(
-        (key) =>
-          updated[key as keyof FilterState] !== prev[key as keyof FilterState]
-      );
-      return hasChanged ? updated : prev;
+      const updatedParams = new URLSearchParams(location.search);
+
+      if (updated.date) {
+        updatedParams.set("date", updated.date.format("YYYY-MM-DD"));
+      } else {
+        updatedParams.delete("date");
+      }
+
+      if (updated.category) {
+        updatedParams.set("category", updated.category);
+      } else {
+        updatedParams.delete("category");
+      }
+
+      if (updated.source) {
+        updatedParams.set("source", updated.source);
+      } else {
+        updatedParams.delete("source");
+      }
+
+      updatedParams.set("page", "1");
+      navigate(`?${updatedParams.toString()}`);
+      setPage(1);
+
+      return updated;
     });
   };
 
