@@ -19,7 +19,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const NewsFeed = () => {
   const { mergedNews, error, loading } = useFetchNews();
-  const [page, setPage] = useState(1);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  const initialPage = parseInt(queryParams.get("page") || "1", 10);
   const itemsPerPage = 5;
 
   type FilterState = {
