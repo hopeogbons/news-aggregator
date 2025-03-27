@@ -32,10 +32,11 @@ const NewsFeed = () => {
     source: string;
   };
 
+  const [page, setPage] = useState(initialPage);
   const [filters, setFilters] = useState<FilterState>({
-    date: null,
-    category: "",
-    source: "",
+    date: queryParams.get("date") ? dayjs(queryParams.get("date")) : null,
+    category: queryParams.get("category") || "",
+    source: queryParams.get("source") || "",
   });
 
   const handleFilterChange = (newsFilter: Partial<FilterState>) => {
