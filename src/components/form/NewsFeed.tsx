@@ -97,11 +97,6 @@ const NewsFeed = () => {
     if (page > pageCount) setPage(Math.max(1, pageCount));
   }, [filteredMergedNews, page, itemsPerPage]);
 
-  const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
-    setPage(value);
-    console.log(event);
-  };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" my={3}>
