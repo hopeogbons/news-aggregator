@@ -39,6 +39,14 @@ const NewsFeed = () => {
     source: queryParams.get("source") || "",
   });
 
+  const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    const updatedParams = new URLSearchParams(location.search);
+    updatedParams.set("page", value.toString());
+    navigate(`?${updatedParams.toString()}`);
+    console.log(event);
+  };
+
   const handleFilterChange = (newsFilter: Partial<FilterState>) => {
     setFilters((prev) => {
       const updated = { ...prev, ...newsFilter };
